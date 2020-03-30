@@ -1,5 +1,6 @@
 #include "Communication.hpp"
 #include "Helpers.hpp"
+#include <Windows.h>
 #include <iostream>
 #include <thread>
 
@@ -118,6 +119,11 @@ void Communication::SetTimeout(int ms)
 
     auto to = serial::Timeout::simpleTimeout(ms);
     m_serial.setTimeout(to);
+}
+
+std::vector<serial::PortInfo> Communication::ListPorts()
+{
+    return serial::list_ports();
 }
 
 void Communication::StopTransmissionAndSuperPurge()

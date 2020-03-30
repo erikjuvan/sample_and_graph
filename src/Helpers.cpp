@@ -1,6 +1,5 @@
 #include "Helpers.hpp"
 #include <sstream>
-#include <windows.h>
 
 namespace Help
 {
@@ -22,7 +21,7 @@ std::vector<std::string> TokenizeString(std::string const& str, std::string cons
     size_t                   offset = 0;
     size_t                   len    = 0;
 
-    for (int i = 0; i < str.size(); ++i) {
+    for (size_t i = 0; i < str.size(); ++i) {
         bool delim_found = false;
         for (auto const c : delims) {
             if (str[i] == c) {
@@ -46,29 +45,6 @@ std::vector<std::string> TokenizeString(std::string const& str, std::string cons
         result.push_back(str.substr(offset, len));
 
     return result;
-}
-
-std::vector<std::string> GetCOMPorts()
-{
-    std::vector<std::string> ret_ports;
-
-    for (int i = 0; i < 255; ++i) {
-        auto port_name     = "COM" + std::to_string(i);
-        auto win_port_name = "\\\\.\\" + port_name;
-        auto hnd           = CreateFile(win_port_name.c_str(), GENERIC_READ | GENERIC_WRITE,
-                              0,
-                              NULL,
-                              OPEN_EXISTING,
-                              0,
-                              NULL);
-
-        if (hnd != INVALID_HANDLE_VALUE) {
-            CloseHandle(hnd);
-            ret_ports.push_back(port_name);
-        }
-    }
-
-    return ret_ports;
 }
 
 } // namespace Help

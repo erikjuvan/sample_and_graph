@@ -18,6 +18,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 	src/Helpers.cpp
 	src/Window.cpp
 	src/MainWindow.cpp
+	src/Device.cpp
 	)
 	
 target_sources(${PROJECT_NAME} PRIVATE 
@@ -26,12 +27,14 @@ target_sources(${PROJECT_NAME} PRIVATE
 	include/Helpers.hpp
 	include/Window.hpp
 	include/MainWindow.hpp
+	include/Device.hpp
 	)
 
 set(SERIALLIBRARY_DIR "" CACHE PATH "Path to SerialLibrary root dir")
 find_library(SERIALLIBRARY_RELEASE NAMES SerialLibrary PATHS "${SERIALLIBRARY_DIR}/build/*" NO_DEFAULT_PATH)
 find_library(SERIALLIBRARY_DEBUG NAMES SerialLibrary-d PATHS "${SERIALLIBRARY_DIR}/build/*" NO_DEFAULT_PATH)
-set(SERIALLIBRARY_LIBRARIES debug ${SERIALLIBRARY_DEBUG} optimized ${SERIALLIBRARY_RELEASE})
+set(SERIALLIBRARY_LIBRARIES_TMP debug ${SERIALLIBRARY_DEBUG} optimized ${SERIALLIBRARY_RELEASE})
+set(SERIALLIBRARY_LIBRARIES ${SERIALLIBRARY_LIBRARIES_TMP} setupapi) # setupapi is needed for list_ports
 find_path(SERIALLIBRARY_INCLUDE_DIR NAME serial/serial.h PATHS "${SERIALLIBRARY_DIR}/*" NO_DEFAULT_PATH)
 	
 set(MYGUI_DIR "" CACHE PATH "Path to mygui root dir")

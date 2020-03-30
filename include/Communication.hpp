@@ -9,17 +9,21 @@ public:
     Communication();
     ~Communication();
 
-    bool        Connect(const std::string& port);
-    void        Disconnect();
-    inline bool IsConnected() { return m_is_connected; }
-    size_t      GetRxBufferLen();
-    size_t      Write(const void* buffer, int size);
-    size_t      Write(const std::string& buffer);
-    size_t      Read(void* buffer, int size);
-    size_t      Communication::Read(std::vector<uint8_t>& buffer, size_t size = 1);
-    std::string Readline();
-    void        Flush();
-    void        Purge();
+    // Making copy constructor a deleted function since serial has a deleted CC
+    Communication(const Communication&) = delete;
+
+    bool                          Connect(const std::string& port);
+    void                          Disconnect();
+    inline bool                   IsConnected() { return m_is_connected; }
+    size_t                        GetRxBufferLen();
+    size_t                        Write(const void* buffer, int size);
+    size_t                        Write(const std::string& buffer);
+    size_t                        Read(void* buffer, int size);
+    size_t                        Communication::Read(std::vector<uint8_t>& buffer, size_t size = 1);
+    std::string                   Readline();
+    void                          Flush();
+    void                          Purge();
+    std::vector<serial::PortInfo> ListPorts();
 
     void                     StopTransmissionAndSuperPurge();
     void                     SetTimeout(int ms);
