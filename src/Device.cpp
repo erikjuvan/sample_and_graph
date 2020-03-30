@@ -7,7 +7,13 @@ using namespace std::chrono_literals;
 
 Device::Device(std::string name, int id, std::vector<std::string> node_names)
 {
-    auto ports = m_serial_socket.ListPorts();
+    auto all_ports = m_serial_socket.ListPorts();
+
+    // Extract only valid ports by checking description
+    decltype(all_ports) ports;
+    for (auto& it = all_ports.begin(); it != all_ports.end(); ++it)
+        if (it->description.find("STMicroelectronics Virtual COM Port") != std::string::npos) // found it
+            ports.push_back(*it);
 
     std::cout << "Initializing new Device\n";
     std::cout << "-----------------------\n";
@@ -24,7 +30,7 @@ Device::Device(std::string name, int id, std::vector<std::string> node_names)
             std::cout << "Connected to " << p << "\n";
             std::this_thread::sleep_for(1s); // Waiting to gather some data
             auto len = m_serial_socket.GetRxBufferLen();
-            if (len < sizeof(DataPacket::Delim)) {
+            if (len < sizeof(DataPacket::HEADER_START_ID)) {
                 std::cout << "No activity on " << p << ", Disconnecting!\n";
                 m_serial_socket.Disconnect();
                 continue;

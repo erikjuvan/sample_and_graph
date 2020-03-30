@@ -6,15 +6,15 @@
 #include <vector>
 
 struct DataPacket {
-    static constexpr uint32_t Delim = 0xDEADBEEF;
+    static constexpr uint32_t HEADER_START_ID = 0xDEADBEEF;
 
     static std::optional<DataPacket> Extract(const uint8_t* data, size_t size)
     {
-        if (size < sizeof(Delim))
+        if (size < sizeof(HEADER_START_ID))
             return std::nullopt;
 
-        for (int i = 0; i <= (size - sizeof(Delim)); ++i)
-            if (*((uint32_t*)&data[i]) == Delim) {
+        for (int i = 0; i <= (size - sizeof(HEADER_START_ID)); ++i)
+            if (*((uint32_t*)&data[i]) == HEADER_START_ID) {
                 DataPacket data_packet;
                 int        remaining_size = size - i;
                 if (remaining_size < sizeof(Header))
