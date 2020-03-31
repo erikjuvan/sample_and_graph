@@ -75,6 +75,7 @@ public:
     void SetID(int id) { m_id = id; }
     void SetNodes(std::vector<Node> const& nodes) { m_nodes = nodes; }
     bool TryConnect();
+    void Disconnect();
 
     std::vector<decltype(DataPacket::payload)> GetData() const;
 

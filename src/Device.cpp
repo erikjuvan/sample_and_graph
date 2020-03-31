@@ -98,11 +98,16 @@ bool Device::TryConnect()
     return true;
 }
 
-Device::~Device()
+void Device::Disconnect()
 {
     if (m_serial_socket->IsConnected()) {
         m_serial_socket->Disconnect();
     }
+}
+
+Device::~Device()
+{
+    Disconnect();
 }
 
 std::vector<decltype(DataPacket::payload)> Device::GetData() const

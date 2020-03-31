@@ -6,12 +6,8 @@
 #include <functional>
 #include <thread>
 
-void MainWindow::button_connect_Click()
-{
-    // TODO
-}
-
-void MainWindow::button_run_Click()
+/*
+void MainWindow::run()
 {
     if (!*m_running) {
         *m_running = true;
@@ -24,7 +20,7 @@ void MainWindow::button_run_Click()
     }
 }
 
-void MainWindow::button_save_Click()
+void MainWindow::save()
 {
     // Check if there is anything to save
     // ...
@@ -67,13 +63,11 @@ void MainWindow::button_save_Click()
     std::ifstream read_file(fname, std::ifstream::binary);
     if (read_file.is_open()) {
         // Mem compare
-        /*
         if (std::memcmp(&tmp, &header, sizeof(Header))) {
             std::cerr << "Error write failed: Incorrect header when reading back file!\n";
             read_file.close();
             return;
         }
-        */
     } else {
         std::cerr << "Error: can't open file for reading!\n";
         return;
@@ -99,25 +93,7 @@ void MainWindow::button_save_Click()
     // All is well :)
     std::cout << "Successfully written " << fsize << " bytes to " << fname << std::endl;
 }
-
-void MainWindow::textbox_send_raw_EnterPress()
-{
-}
-
-void MainWindow::label_recv_raw_Clicked()
-{
-    label_recv_raw->SetText("");
-}
-
-void MainWindow::RunClick()
-{
-    button_run_Click();
-}
-
-void MainWindow::ConnectCrossData(std::shared_ptr<bool> running)
-{
-    m_running = running;
-}
+*/
 
 MainWindow::MainWindow(int w, int h, std::string const& title, sf::Uint32 style) :
     Window(w, h, title, style)
@@ -126,23 +102,23 @@ MainWindow::MainWindow(int w, int h, std::string const& title, sf::Uint32 style)
     // Buttons //
     /////////////
     button_connect = std::make_shared<mygui::Button>(10, 50, "Connect");
-    button_connect->OnClick(std::bind(&MainWindow::button_connect_Click, this));
+    button_connect->OnClick([this] { signal_button_connect_Click(button_connect); });
 
     button_run = std::make_shared<mygui::Button>(10, 90, "Stopped");
-    button_run->OnClick(std::bind(&MainWindow::button_run_Click, this));
+    button_run->OnClick(std::bind(&MainWindow::signal_button_run_Click, this));
 
     button_save = std::make_shared<mygui::Button>(10, 130, "Save");
-    button_save->OnClick(std::bind(&MainWindow::button_save_Click, this));
+    button_save->OnClick(std::bind(&MainWindow::signal_button_save_Click, this));
 
     textbox_send_raw = std::make_shared<mygui::Textbox>(10, 740, "", 120);
     textbox_send_raw->Enabled(false);
-    textbox_send_raw->OnEnterPress(std::bind(&MainWindow::textbox_send_raw_EnterPress, this));
+    textbox_send_raw->OnEnterPress(std::bind(&MainWindow::signal_textbox_send_raw_EnterPress, this));
 
     ////////////
     // Labels //
     ////////////
     label_recv_raw = std::make_shared<mygui::Label>(10, 785, "");
-    label_recv_raw->OnClick(std::bind(&MainWindow::label_recv_raw_Clicked, this));
+    label_recv_raw->OnClick(std::bind(&MainWindow::signal_label_recv_raw_Clicked, this));
 
     /////////////////
     // Main window //
@@ -162,6 +138,4 @@ MainWindow::MainWindow(int w, int h, std::string const& title, sf::Uint32 style)
 
 MainWindow::~MainWindow()
 {
-    if (*m_running)
-        button_run_Click();
 }

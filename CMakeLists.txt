@@ -22,6 +22,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 	)
 	
 target_sources(${PROJECT_NAME} PRIVATE 
+	include/lsignal.hpp
 	include/Application.hpp
 	include/Communication.hpp
 	include/Helpers.hpp

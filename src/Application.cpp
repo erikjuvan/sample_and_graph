@@ -92,17 +92,29 @@ void Application::Run()
 
 void Application::ConnectToDevices()
 {
-    // Initial parameters from file init
-    auto tokens = ParseConfigFile("config.txt");
-    ConfigureFromTokens(tokens);
+    if (!m_connected) {
+        // Initial parameters from file init
+        auto tokens = ParseConfigFile("config.txt");
+        ConfigureFromTokens(tokens);
 
-    // Connect to configured devices
-    m_connected = true;
-    for (auto& dev : m_devices)
-        m_connected &= dev.TryConnect(); // check if any connections fail by AND-ing
+        // Connect to configured devices
+        bool connected = true;
+        for (auto& dev : m_devices)
+            connected &= dev.TryConnect(); // check if any connections fail by AND-ing
 
-    if (!m_connected)
-        throw std::runtime_error("Can't find all devices!");
+        if (!connected)
+            throw std::runtime_error("Can't find all devices!");
+
+        m_connected = connected;
+    }
+}
+
+void Application::DisconnectFromDevices()
+{
+    if (m_connected) {
+        m_connected = false;
+        m_devices.clear();
+    }
 }
 
 Application::Application()
@@ -116,8 +128,22 @@ Application::Application()
     // Create main window
     m_mainWindow = std::make_unique<MainWindow>(900, 500, "Sorting Control", sf::Style::None | sf::Style::Close);
 
-    // Now that all objects are created pass all neccessary data to mainwindow
-    m_mainWindow->ConnectCrossData(m_running);
+    m_mainWindow->signal_button_connect_Click.connect([this](std::shared_ptr<mygui::Button> connect_btn) {
+        if (!m_connected) {
+            auto thr = std::thread([this, connect_btn] {
+                connect_btn->SetText("Connecting");
+                connect_btn->SetColor(sf::Color::Yellow);
+                ConnectToDevices();
+                connect_btn->SetText("Disconnect");
+                connect_btn->SetColor(sf::Color::Red);
+            });
+            thr.detach();
+        } else {
+            DisconnectFromDevices();
+            connect_btn->SetText("Connect");
+            connect_btn->ResetColor();
+        }
+    });
 }
 
 Application::~Application()

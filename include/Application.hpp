@@ -24,7 +24,7 @@ private:
     std::unique_ptr<MainWindow> m_mainWindow;
 
     std::deque<Device> m_devices;
-    bool               m_connected{true};
+    bool               m_connected{false};
 
     std::shared_ptr<bool> m_running;
 
@@ -42,5 +42,6 @@ public:
     ~Application();
 
     void ConnectToDevices();
+    void DisconnectFromDevices();
     void Run();
 };
