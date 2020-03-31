@@ -7,7 +7,6 @@
 #include <mygui/Label.hpp>
 #include <mygui/Textbox.hpp>
 
-#include "Application.hpp"
 #include "Window.hpp"
 
 class MainWindow : public Window
@@ -35,7 +34,6 @@ public:
     ~MainWindow();
 
     void ConnectCrossData(std::shared_ptr<bool> m_running);
-    void UpdateWithNewData(const DataPacket& data);
 
     // Members
     //////////

@@ -121,9 +121,32 @@ void Communication::SetTimeout(int ms)
     m_serial.setTimeout(to);
 }
 
-std::vector<serial::PortInfo> Communication::ListPorts()
+std::vector<serial::PortInfo> Communication::ListAllPorts()
 {
     return serial::list_ports();
+}
+
+std::vector<std::string> Communication::ListFreePorts()
+{
+    std::vector<std::string> ret_ports;
+#ifdef _WIN32
+    for (int i = 0; i < 255; ++i) {
+        auto port_name     = "COM" + std::to_string(i);
+        auto win_port_name = "\\\\.\\" + port_name;
+        auto hnd           = CreateFile(win_port_name.c_str(), GENERIC_READ | GENERIC_WRITE,
+                              0,
+                              NULL,
+                              OPEN_EXISTING,
+                              0,
+                              NULL);
+
+        if (hnd != INVALID_HANDLE_VALUE) {
+            CloseHandle(hnd);
+            ret_ports.push_back(port_name);
+        }
+    }
+#endif
+    return ret_ports;
 }
 
 void Communication::StopTransmissionAndSuperPurge()

@@ -13,7 +13,7 @@ struct DataPacket {
         if (size < sizeof(HEADER_START_ID))
             return std::nullopt;
 
-        for (int i = 0; i <= (size - sizeof(HEADER_START_ID)); ++i)
+        for (int i = 0; i <= (size - sizeof(HEADER_START_ID)); ++i) {
             if (*((uint32_t*)&data[i]) == HEADER_START_ID) {
                 DataPacket data_packet;
                 int        remaining_size = size - i;
@@ -30,6 +30,7 @@ struct DataPacket {
                 data_packet.payload.assign(&payload_data[0], &payload_data[payload_len]);
                 return data_packet;
             }
+        }
 
         return std::nullopt;
     }
@@ -56,8 +57,8 @@ public:
     Node(std::string name) :
         m_name(name) {}
 
-    void AddToBuffer(uint32_t data) { buffer.push_back(data); }
-    auto GetBuffer() { return buffer; }
+    void  AddToBuffer(uint32_t data) { buffer.push_back(data); }
+    auto& GetBuffer() const { return buffer; }
 
 private:
     std::string           m_name;
@@ -67,13 +68,18 @@ private:
 class Device
 {
 public:
-    Device::Device(std::string name, int id, std::vector<std::string> node_names);
-    Device::~Device();
+    Device();
+    ~Device();
 
-    std::vector<decltype(DataPacket::payload)> GetData();
+    void SetName(std::string const& name) { m_name = name; }
+    void SetID(int id) { m_id = id; }
+    void SetNodes(std::vector<Node> const& nodes) { m_nodes = nodes; }
+    bool TryConnect();
+
+    std::vector<decltype(DataPacket::payload)> GetData() const;
 
 private:
-    Communication m_serial_socket;
+    std::shared_ptr<Communication> m_serial_socket;
 
     std::string       m_name{""};
     int               m_id{-1};

@@ -119,10 +119,6 @@ void MainWindow::ConnectCrossData(std::shared_ptr<bool> running)
     m_running = running;
 }
 
-void MainWindow::UpdateWithNewData(const DataPacket& data)
-{
-}
-
 MainWindow::MainWindow(int w, int h, std::string const& title, sf::Uint32 style) :
     Window(w, h, title, style)
 {

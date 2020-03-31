@@ -3,9 +3,11 @@
 #include "MainWindow.hpp"
 #include <Helpers.hpp>
 #include <fstream>
+#include <functional>
 #include <future>
 #include <iomanip>
 #include <iostream>
+#include <map>
 #include <mygui/ResourceManager.hpp>
 #include <sstream>
 
@@ -30,7 +32,7 @@ void Application::GetData()
     }
 }
 
-std::vector<std::vector<std::string>> Application::ParseConfigFile(const std::string& file_name)
+Application::AllTokens Application::ParseConfigFile(const std::string& file_name)
 {
     std::ifstream                         in_file(file_name);
     std::string                           str;
@@ -53,6 +55,29 @@ std::vector<std::vector<std::string>> Application::ParseConfigFile(const std::st
     return tokens;
 }
 
+void Application::ConfigureFromTokens(Application::AllTokens all_tokens)
+{
+    std::map<std::string, std::function<void(const LineTokens&)>> commands{
+        {"sample_period", [this](const LineTokens& args) { m_sampling_period = std::stoi(args.at(0)); }},
+        {"device", [this](const LineTokens& args) {m_devices.emplace_back(); if (args.size() > 0) m_devices.back().SetName(args.at(0)); }},
+        {"id", [this](const LineTokens& args) { m_devices.back().SetID(std::stoi(args.at(0))); }},
+        {"nodes", [this](const LineTokens& args) { m_devices.back().SetNodes(std::vector<Node>(args.begin(), args.end())); }},
+    };
+
+    for (auto line_tokens : all_tokens) {
+        auto& cmd = line_tokens[0];
+        std::transform(cmd.begin(), cmd.end(), cmd.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        auto args = LineTokens(line_tokens.begin() + 1, line_tokens.end());
+        // Run command
+        try {
+            commands.at(cmd)(args);
+        } catch (std::out_of_range) {
+            std::cout << "Error trying to configure device. Command '" << cmd << "' unknown!\n";
+        }
+    }
+}
+
 void Application::Run()
 {
     // Create threads that are the brains of the program
@@ -65,14 +90,23 @@ void Application::Run()
     }
 }
 
-Application::Application()
+void Application::ConnectToDevices()
 {
     // Initial parameters from file init
     auto tokens = ParseConfigFile("config.txt");
+    ConfigureFromTokens(tokens);
 
-    std::vector<std::string> node_names{"1", "2"};
-    m_devices.emplace_back("F407", 1, node_names);
+    // Connect to configured devices
+    m_connected = true;
+    for (auto& dev : m_devices)
+        m_connected &= dev.TryConnect(); // check if any connections fail by AND-ing
 
+    if (!m_connected)
+        throw std::runtime_error("Can't find all devices!");
+}
+
+Application::Application()
+{
     // Set resource manager font name
     mygui::ResourceManager::SetSystemFontName("segoeui.ttf");
 
@@ -88,5 +122,6 @@ Application::Application()
 
 Application::~Application()
 {
-    m_thread_get_data.join();
+    if (m_thread_get_data.joinable())
+        m_thread_get_data.join();
 }

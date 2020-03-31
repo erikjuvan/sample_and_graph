@@ -1,13 +1,38 @@
 #include "Device.hpp"
 #include "Helpers.hpp"
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 
 using namespace std::chrono_literals;
 
-Device::Device(std::string name, int id, std::vector<std::string> node_names)
+Device::Device()
 {
-    auto all_ports = m_serial_socket.ListPorts();
+    m_serial_socket = std::make_shared<Communication>();
+}
+
+bool Device::TryConnect()
+{
+    // Check if device is configured
+    if (m_id < 0 && m_nodes.size() == 0) {
+        std::cout << "Device not configured, please configure device before trying to connect.\n";
+        return false;
+    }
+
+    // Kinda verbose and ugly but it works (find only free STM ports
+    auto all_ports  = m_serial_socket->ListAllPorts();
+    auto free_ports = m_serial_socket->ListFreePorts();
+    for (auto& it = all_ports.begin(); it != all_ports.end();) {
+        bool found = false;
+        for (auto& fp = free_ports.begin(); fp != free_ports.end(); ++fp)
+            if (it->port == *fp)
+                found = true;
+
+        if (!found)
+            it = all_ports.erase(it);
+        else
+            ++it;
+    }
 
     // Extract only valid ports by checking description
     decltype(all_ports) ports;
@@ -15,40 +40,37 @@ Device::Device(std::string name, int id, std::vector<std::string> node_names)
         if (it->description.find("STMicroelectronics Virtual COM Port") != std::string::npos) // found it
             ports.push_back(*it);
 
-    std::cout << "Initializing new Device\n";
+    auto dev_info = "ID:" + std::to_string(m_id) + " name:" + m_name;
+
+    std::cout << "Initializing new Device (" << dev_info << ")\n";
     std::cout << "-----------------------\n";
 
     if (ports.empty()) {
         std::cout << "No available serial ports found!\n";
         std::cout << "-----------------------\n\n";
-        return;
+        return false;
     }
 
     for (auto const& [p, desc, hw_id] : ports) {
         std::cout << "Trying " << p << "...\n";
-        if (m_serial_socket.Connect(p)) {
+        if (m_serial_socket->Connect(p)) {
             std::cout << "Connected to " << p << "\n";
             std::this_thread::sleep_for(1s); // Waiting to gather some data
-            auto len = m_serial_socket.GetRxBufferLen();
+            auto len = m_serial_socket->GetRxBufferLen();
             if (len < sizeof(DataPacket::HEADER_START_ID)) {
                 std::cout << "No activity on " << p << ", Disconnecting!\n";
-                m_serial_socket.Disconnect();
+                m_serial_socket->Disconnect();
                 continue;
             }
             std::vector<uint8_t> buf;
-            auto                 read = m_serial_socket.Read(buf, len);
+            auto                 read = m_serial_socket->Read(buf, len);
             std::cout << "Read " << read << " of available " << len << " bytes" << std::endl;
             std::cout << "Searching for valid data packet...\n";
 
             if (auto opt_packet = DataPacket::Extract(buf); opt_packet) {
                 std::cout << "Valid data packet found\n";
                 auto packet = *opt_packet;
-                if (packet.header.device_id == id) { // Found ID
-                    m_id   = id;
-                    m_name = name;
-                    for (auto const& name : node_names)
-                        m_nodes.push_back(name);
-
+                if (packet.header.device_id == m_id) { // Found ID
                     m_connected = true;
                 }
             } else {
@@ -61,28 +83,29 @@ Device::Device(std::string name, int id, std::vector<std::string> node_names)
         if (m_connected)
             break;
         else
-            m_serial_socket.Disconnect();
+            m_serial_socket->Disconnect();
     }
 
     if (!m_connected) {
-        std::string msg = "Could not find device ID: " + std::to_string(m_id) + "(" + m_name + ")\n";
-        std::cout << msg;
+        std::cout << "Could not find device (" << dev_info << ")\n";
         std::cout << "-----------------------\n\n";
-        throw std::exception(msg.c_str());
+        return false;
     } else {
-        std::cout << "Device ID valid\nSuccessfully connected to device ID: " << m_id << "(" << m_name << ")\n";
+        std::cout << "Device ID valid\nSuccessfully connected to device (" << dev_info << ")\n";
         std::cout << "-----------------------\n\n";
     }
+
+    return true;
 }
 
 Device::~Device()
 {
-    if (m_serial_socket.IsConnected()) {
-        m_serial_socket.Disconnect();
+    if (m_serial_socket->IsConnected()) {
+        m_serial_socket->Disconnect();
     }
 }
 
-std::vector<decltype(DataPacket::payload)> Device::GetData()
+std::vector<decltype(DataPacket::payload)> Device::GetData() const
 {
     if (m_connected) {
     }

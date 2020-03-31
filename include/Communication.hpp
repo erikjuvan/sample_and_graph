@@ -23,7 +23,8 @@ public:
     std::string                   Readline();
     void                          Flush();
     void                          Purge();
-    std::vector<serial::PortInfo> ListPorts();
+    std::vector<serial::PortInfo> ListAllPorts();
+    std::vector<std::string>      ListFreePorts();
 
     void                     StopTransmissionAndSuperPurge();
     void                     SetTimeout(int ms);
