@@ -9,6 +9,7 @@
 
 #include <lsignal.hpp>
 
+#include "Chart.hpp"
 #include "Window.hpp"
 
 class MainWindow : public Window
@@ -20,31 +21,34 @@ private:
     // Widgets
     //////////
 
-    // Button
-    std::shared_ptr<mygui::Button> button_connect;
-    std::shared_ptr<mygui::Button> button_run;
-    std::shared_ptr<mygui::Button> button_save;
+    std::shared_ptr<Chart> chart;
 
-    // Texbox
-    std::shared_ptr<mygui::Textbox> textbox_send_raw;
+    // Using pyhsical devices
+    std::shared_ptr<mygui::Button>  button_connect;           // connect/disconnects to/from physical devices, also unload any loaded data
+    std::shared_ptr<mygui::Button>  button_run;               // start capturing live data
+    std::shared_ptr<mygui::Button>  button_save;              // save captured data to file
+    std::shared_ptr<mygui::Button>  button_set_sample_period; // set sampling period for all connected devices
+    std::shared_ptr<mygui::Textbox> textbox_set_sample_period;
 
-    // Labels
-    std::shared_ptr<mygui::Label> label_recv_raw;
+    // Loading data from memory
+    std::shared_ptr<mygui::Button> button_load; // load data from external file, also stops and disconnects all devices
+
+    // Used by both use cases
+    std::shared_ptr<mygui::Button> button_clear_data; // clear all data
 
 public:
     // Methods
-    MainWindow(int w, int h, std::string const& title, sf::Uint32 style = sf::Style::Default);
+    MainWindow();
     ~MainWindow();
 
     // Signals
     template <typename T>
     using Signal = lsignal::signal<T>;
 
-    Signal<void(std::shared_ptr<mygui::Button>)> signal_button_connect_Click;
-    Signal<void()>                               signal_button_run_Click;
-    Signal<void()>                               signal_button_save_Click;
-
-    Signal<void()> signal_textbox_send_raw_EnterPress;
-
-    Signal<void()> signal_label_recv_raw_Clicked;
+    Signal<void(std::shared_ptr<mygui::Button>)> signal_button_connect_Clicked;
+    Signal<void(std::shared_ptr<mygui::Button>)> signal_button_run_Clicked;
+    Signal<void()>                               signal_button_save_Clicked;
+    Signal<void(std::string)>                    signal_button_set_sample_period_Clicked;
+    Signal<void()>                               signal_button_load_Clicked;
+    Signal<void()>                               signal_button_clear_data_Clicked;
 };

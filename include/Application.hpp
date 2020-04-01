@@ -24,9 +24,9 @@ private:
     std::unique_ptr<MainWindow> m_mainWindow;
 
     std::deque<Device> m_devices;
-    bool               m_connected{false};
 
-    std::shared_ptr<bool> m_running;
+    bool m_connected{false};
+    bool m_running{false};
 
     std::thread m_thread_get_data;
 

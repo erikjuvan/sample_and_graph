@@ -95,45 +95,44 @@ void MainWindow::save()
 }
 */
 
-MainWindow::MainWindow(int w, int h, std::string const& title, sf::Uint32 style) :
-    Window(w, h, title, style)
+MainWindow::MainWindow() :
+    Window(1100, 600, "Sorting Control", sf::Style::None | sf::Style::Close)
 {
-    /////////////
-    // Buttons //
-    /////////////
-    button_connect = std::make_shared<mygui::Button>(10, 50, "Connect");
-    button_connect->OnClick([this] { signal_button_connect_Click(button_connect); });
+    chart = std::make_shared<Chart>(100, 10, 990, 580, 100, 100);
 
-    button_run = std::make_shared<mygui::Button>(10, 90, "Stopped");
-    button_run->OnClick(std::bind(&MainWindow::signal_button_run_Click, this));
+    button_connect = std::make_shared<mygui::Button>(10, 10, "Connect");
+    button_connect->OnClick([this] { signal_button_connect_Clicked(button_connect); });
 
-    button_save = std::make_shared<mygui::Button>(10, 130, "Save");
-    button_save->OnClick(std::bind(&MainWindow::signal_button_save_Click, this));
+    button_run = std::make_shared<mygui::Button>(10, 50, "Start");
+    button_run->OnClick([this] { signal_button_run_Clicked(button_run); });
 
-    textbox_send_raw = std::make_shared<mygui::Textbox>(10, 740, "", 120);
-    textbox_send_raw->Enabled(false);
-    textbox_send_raw->OnEnterPress(std::bind(&MainWindow::signal_textbox_send_raw_EnterPress, this));
+    button_save = std::make_shared<mygui::Button>(10, 90, "Save");
+    button_save->OnClick([this] { signal_button_save_Clicked(); });
 
-    ////////////
-    // Labels //
-    ////////////
-    label_recv_raw = std::make_shared<mygui::Label>(10, 785, "");
-    label_recv_raw->OnClick(std::bind(&MainWindow::signal_label_recv_raw_Clicked, this));
+    textbox_set_sample_period = std::make_shared<mygui::Textbox>(10, 130, "1s");
+    button_set_sample_period  = std::make_shared<mygui::Button>(10, 170, "Set Ts");
+    button_set_sample_period->OnClick([this] { signal_button_set_sample_period_Clicked(textbox_set_sample_period->GetText()); });
 
-    /////////////////
-    // Main window //
-    /////////////////
+    button_load = std::make_shared<mygui::Button>(10, 240, "Load");
+    button_load->OnClick([this] { signal_button_load_Clicked(); });
 
-    // Buttons
+    button_clear_data = std::make_shared<mygui::Button>(10, 310, "Clear Data");
+    button_clear_data->OnClick([this] { signal_button_clear_data_Clicked(); });
+
+    // Add widgets
+
+    Add(chart);
+
     Add(button_connect);
     Add(button_run);
     Add(button_save);
 
-    // Texboxes
-    Add(textbox_send_raw);
+    Add(textbox_set_sample_period);
+    Add(button_set_sample_period);
 
-    // Labels
-    Add(label_recv_raw);
+    Add(button_load);
+
+    Add(button_clear_data);
 }
 
 MainWindow::~MainWindow()

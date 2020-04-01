@@ -20,7 +20,7 @@ void Application::GetData()
 
     while (m_mainWindow->IsOpen()) {
 
-        if (*m_running) {
+        if (m_running) {
             /*
             ClientData data;
             for (auto const& c : clients)
@@ -122,26 +122,38 @@ Application::Application()
     // Set resource manager font name
     mygui::ResourceManager::SetSystemFontName("segoeui.ttf");
 
-    // Set state variables
-    m_running = std::make_shared<bool>(false);
-
     // Create main window
-    m_mainWindow = std::make_unique<MainWindow>(900, 500, "Sorting Control", sf::Style::None | sf::Style::Close);
+    m_mainWindow = std::make_unique<MainWindow>();
 
-    m_mainWindow->signal_button_connect_Click.connect([this](std::shared_ptr<mygui::Button> connect_btn) {
+    m_mainWindow->signal_button_connect_Clicked.connect([this](std::shared_ptr<mygui::Button> btn) {
         if (!m_connected) {
-            auto thr = std::thread([this, connect_btn] {
-                connect_btn->SetText("Connecting");
-                connect_btn->SetColor(sf::Color::Yellow);
+            auto thr = std::thread([this, btn] {
+                btn->SetText("Connecting");
+                btn->SetColor(sf::Color::Yellow);
                 ConnectToDevices();
-                connect_btn->SetText("Disconnect");
-                connect_btn->SetColor(sf::Color::Red);
+                btn->SetText("Connected");
+                btn->SetColor(sf::Color::Green);
             });
             thr.detach();
         } else {
             DisconnectFromDevices();
-            connect_btn->SetText("Connect");
-            connect_btn->ResetColor();
+            btn->SetText("Connect");
+            btn->ResetColor();
+        }
+    });
+
+    m_mainWindow->signal_button_run_Clicked.connect([this](std::shared_ptr<mygui::Button> btn) {
+        if (!m_connected)
+            return;
+
+        if (!m_running) {
+            btn->SetText("Running");
+            btn->SetColor(sf::Color::Green);
+            m_running = true;
+        } else {
+            btn->SetText("Start");
+            btn->ResetColor();
+            m_running = false;
         }
     });
 }

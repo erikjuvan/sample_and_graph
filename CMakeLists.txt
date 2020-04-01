@@ -19,6 +19,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 	src/Window.cpp
 	src/MainWindow.cpp
 	src/Device.cpp
+	src/Chart.cpp
 	)
 	
 target_sources(${PROJECT_NAME} PRIVATE 
@@ -29,6 +30,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 	include/Window.hpp
 	include/MainWindow.hpp
 	include/Device.hpp
+	include/Chart.hpp
 	)
 
 set(SERIALLIBRARY_DIR "" CACHE PATH "Path to SerialLibrary root dir")
