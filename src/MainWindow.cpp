@@ -109,14 +109,10 @@ MainWindow::MainWindow() :
     button_save = std::make_shared<mygui::Button>(10, 90, "Save");
     button_save->OnClick([this] { signal_button_save_Clicked(); });
 
-    textbox_set_sample_period = std::make_shared<mygui::Textbox>(10, 130, "1s");
-    button_set_sample_period  = std::make_shared<mygui::Button>(10, 170, "Set Ts");
-    button_set_sample_period->OnClick([this] { signal_button_set_sample_period_Clicked(textbox_set_sample_period->GetText()); });
-
-    button_load = std::make_shared<mygui::Button>(10, 240, "Load");
+    button_load = std::make_shared<mygui::Button>(10, 160, "Load");
     button_load->OnClick([this] { signal_button_load_Clicked(); });
 
-    button_clear_data = std::make_shared<mygui::Button>(10, 310, "Clear Data");
+    button_clear_data = std::make_shared<mygui::Button>(10, 230, "Clear Data");
     button_clear_data->OnClick([this] { signal_button_clear_data_Clicked(); });
 
     // Add widgets
@@ -126,9 +122,6 @@ MainWindow::MainWindow() :
     Add(button_connect);
     Add(button_run);
     Add(button_save);
-
-    Add(textbox_set_sample_period);
-    Add(button_set_sample_period);
 
     Add(button_load);
 

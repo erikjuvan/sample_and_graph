@@ -24,11 +24,9 @@ private:
     std::shared_ptr<Chart> chart;
 
     // Using pyhsical devices
-    std::shared_ptr<mygui::Button>  button_connect;           // connect/disconnects to/from physical devices, also unload any loaded data
-    std::shared_ptr<mygui::Button>  button_run;               // start capturing live data
-    std::shared_ptr<mygui::Button>  button_save;              // save captured data to file
-    std::shared_ptr<mygui::Button>  button_set_sample_period; // set sampling period for all connected devices
-    std::shared_ptr<mygui::Textbox> textbox_set_sample_period;
+    std::shared_ptr<mygui::Button> button_connect; // connect/disconnects to/from physical devices, also unload any loaded data
+    std::shared_ptr<mygui::Button> button_run;     // start capturing live data
+    std::shared_ptr<mygui::Button> button_save;    // save captured data to file
 
     // Loading data from memory
     std::shared_ptr<mygui::Button> button_load; // load data from external file, also stops and disconnects all devices
@@ -48,7 +46,6 @@ public:
     Signal<void(std::shared_ptr<mygui::Button>)> signal_button_connect_Clicked;
     Signal<void(std::shared_ptr<mygui::Button>)> signal_button_run_Clicked;
     Signal<void()>                               signal_button_save_Clicked;
-    Signal<void(std::string)>                    signal_button_set_sample_period_Clicked;
     Signal<void()>                               signal_button_load_Clicked;
     Signal<void()>                               signal_button_clear_data_Clicked;
 };
