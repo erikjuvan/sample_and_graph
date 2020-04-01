@@ -91,7 +91,7 @@ bool Device::TryConnect()
         std::cout << "-----------------------\n\n";
         return false;
     } else {
-        std::cout << "Device ID valid\nSuccessfully connected to device (" << dev_info << ")\n";
+        std::cout << "Successfully connected to device (" << dev_info << ")\n";
         std::cout << "-----------------------\n\n";
     }
 

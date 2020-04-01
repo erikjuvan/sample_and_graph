@@ -74,6 +74,9 @@ public:
     void SetName(std::string const& name) { m_name = name; }
     void SetID(int id) { m_id = id; }
     void SetNodes(std::vector<Node> const& nodes) { m_nodes = nodes; }
+    void SetSamplePeriod(uint32_t period_ms);
+    void Start();
+    void Stop();
     bool TryConnect();
     void Disconnect();
 
@@ -86,5 +89,6 @@ private:
     int               m_id{-1};
     std::vector<Node> m_nodes;
     int               m_prev_packet_id{0};
-    bool              m_connected = false;
+    bool              m_connected{false};
+    bool              m_running{false};
 };

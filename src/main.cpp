@@ -4,7 +4,7 @@ int main(int argc, char* argv[])
 {
     Application app;
 
-    app.Run();
+    app.MainLoop();
 
     return 0;
 }

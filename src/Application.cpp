@@ -20,7 +20,7 @@ void Application::GetData()
 
     while (m_mainWindow->IsOpen()) {
 
-        if (m_running) {
+        if (m_devices_running) {
             /*
             ClientData data;
             for (auto const& c : clients)
@@ -78,7 +78,20 @@ void Application::ConfigureFromTokens(Application::AllTokens all_tokens)
     }
 }
 
-void Application::Run()
+void Application::StartDevices()
+{
+
+    m_devices_running = true;
+    ;
+}
+
+void Application::StopDevices()
+{
+
+    m_devices_running = false;
+}
+
+void Application::MainLoop()
 {
     // Create threads that are the brains of the program
     m_thread_get_data = std::thread(std::bind(&Application::GetData, this));
@@ -92,7 +105,7 @@ void Application::Run()
 
 void Application::ConnectToDevices()
 {
-    if (!m_connected) {
+    if (!m_devices_connected) {
         // Initial parameters from file init
         auto tokens = ParseConfigFile("config.txt");
         ConfigureFromTokens(tokens);
@@ -105,14 +118,14 @@ void Application::ConnectToDevices()
         if (!connected)
             throw std::runtime_error("Can't find all devices!");
 
-        m_connected = connected;
+        m_devices_connected = connected;
     }
 }
 
 void Application::DisconnectFromDevices()
 {
-    if (m_connected) {
-        m_connected = false;
+    if (m_devices_connected) {
+        m_devices_connected = false;
         m_devices.clear();
     }
 }
@@ -126,7 +139,7 @@ Application::Application()
     m_mainWindow = std::make_unique<MainWindow>();
 
     m_mainWindow->signal_button_connect_Clicked.connect([this](std::shared_ptr<mygui::Button> btn) {
-        if (!m_connected) {
+        if (!m_devices_connected) {
             auto thr = std::thread([this, btn] {
                 btn->SetText("Connecting");
                 btn->SetColor(sf::Color::Yellow);
@@ -143,17 +156,17 @@ Application::Application()
     });
 
     m_mainWindow->signal_button_run_Clicked.connect([this](std::shared_ptr<mygui::Button> btn) {
-        if (!m_connected)
+        if (!m_devices_connected)
             return;
 
-        if (!m_running) {
+        if (!m_devices_running) {
             btn->SetText("Running");
             btn->SetColor(sf::Color::Green);
-            m_running = true;
+            StartDevices();
         } else {
             btn->SetText("Start");
             btn->ResetColor();
-            m_running = false;
+            StopDevices();
         }
     });
 }

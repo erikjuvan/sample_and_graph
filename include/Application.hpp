@@ -25,8 +25,8 @@ private:
 
     std::deque<Device> m_devices;
 
-    bool m_connected{false};
-    bool m_running{false};
+    bool m_devices_connected{false};
+    bool m_devices_running{false};
 
     std::thread m_thread_get_data;
 
@@ -43,5 +43,7 @@ public:
 
     void ConnectToDevices();
     void DisconnectFromDevices();
-    void Run();
+    void StartDevices();
+    void StopDevices();
+    void MainLoop();
 };
