@@ -82,7 +82,6 @@ void Application::StartDevices()
 {
 
     m_devices_running = true;
-    ;
 }
 
 void Application::StopDevices()
@@ -116,7 +115,7 @@ void Application::ConnectToDevices()
             connected &= dev.TryConnect(); // check if any connections fail by AND-ing
 
         if (!connected)
-            throw std::runtime_error("Can't find all devices!");
+            throw std::runtime_error("Can't connect to all devices!");
 
         m_devices_connected = connected;
     }
@@ -160,13 +159,13 @@ Application::Application()
             return;
 
         if (!m_devices_running) {
+            StartDevices();
             btn->SetText("Running");
             btn->SetColor(sf::Color::Green);
-            StartDevices();
         } else {
+            StopDevices();
             btn->SetText("Start");
             btn->ResetColor();
-            StopDevices();
         }
     });
 }
