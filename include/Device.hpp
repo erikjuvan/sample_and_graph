@@ -43,7 +43,6 @@ struct DataPacket {
 
     struct Header {
         uint32_t header_start_id{0};
-        int8_t   device_id{-1};
         uint32_t payload_size{0};
         uint32_t packet_id{0};
     };
@@ -86,8 +85,8 @@ public:
 private:
     std::shared_ptr<Communication> m_serial_socket;
 
-    std::string       m_name{""};
     int               m_id{-1};
+    std::string       m_name{""};
     std::vector<Node> m_nodes;
     int               m_prev_packet_id{0};
     bool              m_connected{false};

@@ -20,7 +20,7 @@ bool Device::TryConnect()
         return false;
     }
 
-    // Kinda verbose and ugly but it works (find only free STM ports
+    // Find only free ports
     auto all_ports  = m_serial_socket->ListAllPorts();
     auto free_ports = m_serial_socket->ListFreePorts();
     for (auto it = all_ports.begin(); it != all_ports.end();) {
@@ -35,7 +35,7 @@ bool Device::TryConnect()
             ++it;
     }
 
-    // Extract only valid ports by checking description
+    // Extract ports of valid STM32 devices by checking description
     decltype(all_ports) ports;
     for (auto it = all_ports.begin(); it != all_ports.end(); ++it)
         if (it->description.find("STMicroelectronics Virtual COM Port") != std::string::npos) // found it
@@ -48,7 +48,7 @@ bool Device::TryConnect()
 
     if (ports.empty()) {
         std::cout << "No available serial ports found!\n";
-        std::cout << "-----------------------\n\n";
+        std::cout << "-----------------------\n";
         return false;
     }
 
@@ -56,27 +56,13 @@ bool Device::TryConnect()
         std::cout << "Trying " << p << "...\n";
         if (m_serial_socket->Connect(p)) {
             std::cout << "Connected to " << p << "\n";
-            std::this_thread::sleep_for(1s); // Waiting to gather some data
-            auto len = m_serial_socket->GetRxBufferLen();
-            if (len < sizeof(DataPacket::HEADER_START_ID)) {
-                std::cout << "No activity on " << p << ", Disconnecting!\n";
-                m_serial_socket->Disconnect();
-                continue;
-            }
-            std::vector<uint8_t> buf;
-            auto                 read = m_serial_socket->Read(buf, len);
-            std::cout << "Read " << read << " of available " << len << " bytes" << std::endl;
-            std::cout << "Searching for valid data packet...\n";
-
-            if (auto opt_packet = DataPacket::Extract(buf); opt_packet) {
-                std::cout << "Valid data packet found\n";
-                auto packet = *opt_packet;
-                if (packet.header.device_id == m_id) { // Found ID
+            m_serial_socket->Write("ID_G");
+            auto line = m_serial_socket->Readline();
+            auto tok  = Help::TokenizeString(line, ",");
+            if (tok.size() == 2 && tok[0] == "ID_G")
+                if (auto id = std::stoi(tok[1]); id == m_id)
                     m_connected = true;
-                }
-            } else {
-                std::cout << "No valid data packet found!\n";
-            }
+
         } else {
             std::cout << "Can't connect to " << p << "!\n";
         }
@@ -89,11 +75,11 @@ bool Device::TryConnect()
 
     if (!m_connected) {
         std::cout << "Could not find device (" << dev_info << ")\n";
-        std::cout << "-----------------------\n\n";
+        std::cout << "-----------------------\n";
         return false;
     } else {
         std::cout << "Successfully connected to device (" << dev_info << ")\n";
-        std::cout << "-----------------------\n\n";
+        std::cout << "-----------------------\n";
     }
 
     return true;
