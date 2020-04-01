@@ -76,7 +76,8 @@ void Chart::Handle(const sf::Event& event)
             CreateAxisMarkers();
         }
     } else if (event.type == sf::Event::KeyReleased && m_mouseover) {
-        m_onKeyPress(event);
+        if (m_onKeyPress)
+            m_onKeyPress(event);
     } else if (event.type == sf::Event::MouseMoved) {
         if (m_chart_region.getGlobalBounds().contains(sf::Vector2f(event.mouseMove.x, event.mouseMove.y))) {
             m_mouseover = true;

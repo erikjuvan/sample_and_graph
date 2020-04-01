@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <thread>
 
 using namespace std::chrono_literals;
 
@@ -22,9 +23,9 @@ bool Device::TryConnect()
     // Kinda verbose and ugly but it works (find only free STM ports
     auto all_ports  = m_serial_socket->ListAllPorts();
     auto free_ports = m_serial_socket->ListFreePorts();
-    for (auto& it = all_ports.begin(); it != all_ports.end();) {
+    for (auto it = all_ports.begin(); it != all_ports.end();) {
         bool found = false;
-        for (auto& fp = free_ports.begin(); fp != free_ports.end(); ++fp)
+        for (auto fp = free_ports.begin(); fp != free_ports.end(); ++fp)
             if (it->port == *fp)
                 found = true;
 
@@ -36,7 +37,7 @@ bool Device::TryConnect()
 
     // Extract only valid ports by checking description
     decltype(all_ports) ports;
-    for (auto& it = all_ports.begin(); it != all_ports.end(); ++it)
+    for (auto it = all_ports.begin(); it != all_ports.end(); ++it)
         if (it->description.find("STMicroelectronics Virtual COM Port") != std::string::npos) // found it
             ports.push_back(*it);
 

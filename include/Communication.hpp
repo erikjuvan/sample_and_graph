@@ -19,7 +19,7 @@ public:
     size_t                        Write(const void* buffer, int size);
     size_t                        Write(const std::string& buffer);
     size_t                        Read(void* buffer, int size);
-    size_t                        Communication::Read(std::vector<uint8_t>& buffer, size_t size = 1);
+    size_t                        Read(std::vector<uint8_t>& buffer, size_t size = 1);
     std::string                   Readline();
     void                          Flush();
     void                          Purge();

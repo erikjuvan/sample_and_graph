@@ -1,8 +1,11 @@
 #include "Communication.hpp"
 #include "Helpers.hpp"
-#include <Windows.h>
 #include <iostream>
 #include <thread>
+
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 
 Communication::Communication() :
     m_serial("", 460800)

@@ -96,7 +96,7 @@ void MainWindow::save()
 */
 
 MainWindow::MainWindow() :
-    Window(1100, 600, "Sorting Control", sf::Style::None | sf::Style::Close)
+    Window(1100, 600, "Sample and Graph", sf::Style::None | sf::Style::Close)
 {
     chart = std::make_shared<Chart>(100, 10, 990, 580, 100, 100);
 
