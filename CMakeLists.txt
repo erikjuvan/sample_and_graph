@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11.3)
-project(SPINE_temp_acquisition_SW)
+project(sample_and_graph)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo") 
 
