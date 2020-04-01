@@ -1,10 +1,7 @@
 #pragma once
 
-#include <deque>
-
 #include <mygui/Button.hpp>
 #include <mygui/Checkbox.hpp>
-#include <mygui/Label.hpp>
 #include <mygui/Textbox.hpp>
 
 #include <lsignal.hpp>

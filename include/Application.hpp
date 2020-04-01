@@ -46,4 +46,5 @@ public:
     void StartDevices();
     void StopDevices();
     void MainLoop();
+    void Save();
 };
