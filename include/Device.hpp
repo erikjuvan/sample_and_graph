@@ -1,10 +1,9 @@
 #pragma once
 
 #include "Communication.hpp"
+#include "Serializer.hpp"
 #include <memory>
 #include <optional>
-#include <string>
-#include <vector>
 
 struct DataPacket {
     static constexpr uint32_t HEADER_START_ID = 0xDEADBEEF;
@@ -51,25 +50,131 @@ struct DataPacket {
     std::vector<uint32_t> payload;
 };
 
-class Node
+class Node : public Serializer
 {
 public:
-    Node(std::string name) :
+    Node(std::string const& name) :
         m_name(name) {}
+    Node() {}
 
-    void  AddToBuffer(uint32_t data) { buffer.push_back(data); }
-    auto& GetBuffer() const { return buffer; }
+    virtual ser_data_t Serialize() const override
+    {
+        ser_data_t data;
+        Serializer::append(data, "node");
+        Serializer::append(data, m_name);
+        for (auto x : m_buffer)
+            Serializer::append(data, x);
+        data.pop_back();
+        Serializer::append(data, "\n", "");
+        return data;
+    }
+
+    virtual void Deserialize(ser_data_t& data) override
+    {
+        auto newline_it = std::find(data.begin(), data.end(), '\n');
+
+        std::string              str(data.begin(), newline_it);
+        std::istringstream       ss(str);
+        std::string              str_tok;
+        std::vector<std::string> tokens;
+
+        while (std::getline(ss, str_tok, Serializer::Delim[0]))
+            tokens.push_back(str_tok);
+
+        if (tokens.size() > 2 && tokens[0] == "node") {
+            m_name = tokens[1];
+            m_buffer.clear();
+            auto beg = tokens.begin() + 2;
+            for (auto it = beg; it != tokens.end(); ++it)
+                m_buffer.push_back(std::stoi(*it));
+        }
+
+        data = ser_data_t(newline_it + 1 /* skip newline */, data.end());
+    }
+
+    const std::vector<uint32_t>& GetBuffer() const
+    {
+        return m_buffer;
+    }
+
+    void AddToBuffer(uint32_t data)
+    {
+        m_buffer.push_back(data);
+    }
+
+    void AddToBuffer(std::vector<uint32_t> const& data)
+    {
+        m_buffer.insert(m_buffer.end(), data.begin(), data.end());
+    }
+
+    void Name(std::string const& name) { m_name = name; }
+
+    std::string Name() { return m_name; }
+
+    void clear()
+    {
+        m_name.clear();
+        m_buffer.clear();
+    }
 
 private:
     std::string           m_name;
-    std::vector<uint32_t> buffer;
+    std::vector<uint32_t> m_buffer;
 };
 
-class Device
+class BaseDevice : public Serializer
 {
 public:
-    Device();
-    ~Device();
+    virtual ser_data_t Serialize() const override
+    {
+        ser_data_t data;
+        Serializer::append(data, "device");
+        Serializer::append(data, m_id);
+        Serializer::append(data, m_name, "\n");
+        for (auto const& n : m_nodes)
+            Serializer::append(data, n.Serialize());
+        return data;
+    }
+
+    virtual void Deserialize(ser_data_t& data) override
+    {
+        auto newline_it = std::find(data.begin(), data.end(), '\n');
+
+        std::string              str(data.begin(), newline_it);
+        std::istringstream       ss(str);
+        std::string              str_tok;
+        std::vector<std::string> tokens;
+
+        while (std::getline(ss, str_tok, Serializer::Delim[0]))
+            tokens.push_back(str_tok);
+
+        if (tokens.size() == 3 && tokens[0] == "device") {
+            m_id   = std::stoi(tokens[1]);
+            m_name = tokens[2];
+        }
+
+        data = ser_data_t(newline_it + 1 /* skip newline */, data.end());
+        // Check if entry is for a node or a new device
+        while (std::string(data.begin(), std::find(data.begin(), data.end(), ',')) == "node")
+            m_nodes.emplace_back().Deserialize(data);
+    }
+
+protected:
+    int               m_id{-1};
+    std::string       m_name;
+    std::vector<Node> m_nodes;
+};
+
+class VirtualDevice : public BaseDevice
+{
+public:
+};
+
+class PhysicalDevice : public BaseDevice
+{
+public:
+    PhysicalDevice();
+    ~PhysicalDevice();
 
     void SetName(std::string const& name) { m_name = name; }
     void SetID(int id) { m_id = id; }
@@ -80,15 +185,10 @@ public:
     bool TryConnect();
     void Disconnect();
 
-    std::vector<decltype(DataPacket::payload)> GetData() const;
-
 private:
     std::shared_ptr<Communication> m_serial_socket;
 
-    int               m_id{-1};
-    std::string       m_name{""};
-    std::vector<Node> m_nodes;
-    int               m_prev_packet_id{0};
-    bool              m_connected{false};
-    bool              m_running{false};
+    int  m_prev_packet_id{0};
+    bool m_connected{false};
+    bool m_running{false};
 };

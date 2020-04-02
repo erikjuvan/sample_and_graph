@@ -26,10 +26,9 @@ public:
     std::vector<serial::PortInfo> ListAllPorts();
     std::vector<std::string>      ListFreePorts();
 
-    void                     StopTransmissionAndSuperPurge();
     void                     SetTimeout(int ms);
     void                     ConfirmTransmission(std::string const& str); // throws on error
-    std::vector<std::string> WriteAndTokenizeiResult(std::string const& str);
+    std::vector<std::string> WriteAndTokenizeResult(std::string const& str);
 
 private:
     std::mutex     m_mtx;

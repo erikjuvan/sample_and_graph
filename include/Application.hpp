@@ -23,14 +23,15 @@ private:
     // Members
     std::unique_ptr<MainWindow> m_mainWindow;
 
-    std::deque<Device> m_devices;
+    std::vector<PhysicalDevice> m_physical_devices;
+    std::vector<VirtualDevice>  m_virtual_devices;
 
     bool m_devices_connected{false};
     bool m_devices_running{false};
 
     std::thread m_thread_get_data;
 
-    uint32_t m_sampling_period;
+    uint32_t m_sample_period_ms;
 
     // Methods
     AllTokens ParseConfigFile(const std::string& file_name);

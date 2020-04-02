@@ -132,10 +132,22 @@ Application::AllTokens Application::ParseConfigFile(const std::string& file_name
 void Application::ConfigureFromTokens(Application::AllTokens all_tokens)
 {
     std::map<std::string, std::function<void(const LineTokens&)>> commands{
-        {"sample_period", [this](const LineTokens& args) { m_sampling_period = std::stoi(args.at(0)); }},
-        {"device", [this](const LineTokens& args) {m_devices.emplace_back(); if (args.size() > 0) m_devices.back().SetName(args.at(0)); }},
-        {"id", [this](const LineTokens& args) { m_devices.back().SetID(std::stoi(args.at(0))); }},
-        {"nodes", [this](const LineTokens& args) { m_devices.back().SetNodes(std::vector<Node>(args.begin(), args.end())); }},
+        {"sample_period", [this](const LineTokens& args) {
+             auto prd = args.at(0);
+             if (prd.find("ms") != std::string::npos)
+                 m_sample_period_ms = std::stoi(args.at(0));
+             else                                                   // seconds
+                 m_sample_period_ms = std::stoi(args.at(0)) * 1000; // convert seconds to ms
+         }},
+        {"device", [this](const LineTokens& args) {m_physical_devices.emplace_back(); if (args.size() > 0) m_physical_devices.back().SetName(args.at(0)); }},
+        {"id", [this](const LineTokens& args) { m_physical_devices.back().SetID(std::stoi(args.at(0))); }},
+        {"nodes", [this](const LineTokens& args) { 
+            std::vector<Node> nodes;
+            for (auto arg : args)
+            {
+                nodes.emplace_back(arg);
+            }
+            m_physical_devices.back().SetNodes(nodes); }},
     };
 
     for (auto line_tokens : all_tokens) {
@@ -157,6 +169,9 @@ void Application::StartDevices()
     if (m_devices_running)
         return;
 
+    for (auto& dev : m_physical_devices)
+        dev.Start();
+
     std::cout << "Started data acquisition\n\n";
     m_devices_running = true;
 }
@@ -165,6 +180,9 @@ void Application::StopDevices()
 {
     if (!m_devices_running)
         return;
+
+    for (auto& dev : m_physical_devices)
+        dev.Stop();
 
     std::cout << "Stopped data acquisition\n\n";
     m_devices_running = false;
@@ -192,8 +210,10 @@ void Application::ConnectToDevices()
 
         // Connect to configured devices
         bool connected = true;
-        for (auto& dev : m_devices)
-            connected &= dev.TryConnect(); // check if any connections fail by AND-ing
+        for (auto& dev : m_physical_devices) {
+            if (dev.TryConnect())
+                dev.SetSamplePeriod(m_sample_period_ms);
+        }
 
         if (!connected)
             throw std::runtime_error("Can't connect to all devices!");
@@ -207,7 +227,7 @@ void Application::DisconnectFromDevices()
 {
     if (m_devices_connected) {
         m_devices_connected = false;
-        m_devices.clear();
+        m_physical_devices.clear();
         std::cout << "Disconnected from all devices\n\n";
     }
 }

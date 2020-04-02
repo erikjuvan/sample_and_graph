@@ -152,36 +152,6 @@ std::vector<std::string> Communication::ListFreePorts()
     return ret_ports;
 }
 
-void Communication::StopTransmissionAndSuperPurge()
-{
-    using namespace std::chrono_literals;
-
-    // Stop transmission
-    Write("VRBS,0\n");
-
-    // Make sure there is some data in rx buffer
-    int cnt = 0;
-    while (GetRxBufferLen() <= 0) {
-        // Safety, to prevent while (true)
-        std::this_thread::sleep_for(10ms);
-        if (++cnt > 10) {
-            std::cerr << "ERROR: StopTransmissionAndSuperPurge: no data in buffer" << std::endl;
-            break;
-        }
-    }
-
-    // Clear data while it's there
-    for (auto data_in_buf = GetRxBufferLen(); data_in_buf > 0; data_in_buf = GetRxBufferLen()) {
-        Purge();
-        Flush();
-        std::this_thread::sleep_for(10ms);
-    }
-
-    // Make sure we are really stopped by sending the command and checking for confirmation
-    Write("VRBS,0\n");
-    ConfirmTransmission("VRBS,0\n");
-}
-
 void Communication::ConfirmTransmission(std::string const& str)
 {
     auto ret_str    = Readline();
@@ -219,16 +189,11 @@ void Communication::ConfirmTransmission(std::string const& str)
     }
 }
 
-std::vector<std::string> Communication::WriteAndTokenizeiResult(std::string const& str)
+std::vector<std::string> Communication::WriteAndTokenizeResult(std::string const& str)
 {
     Write(str);
     auto ret_data = Readline();
-    if (ret_data.back() == '\n')
-        ret_data.pop_back();
+    auto str_vec  = Help::TokenizeString(ret_data, ",\n");
 
-    auto str_vec = Help::TokenizeString(ret_data, ",\n");
-
-    // Remove first string (command name) and only keep results
-    str_vec.erase(str_vec.begin());
     return str_vec;
 }

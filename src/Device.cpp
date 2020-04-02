@@ -2,17 +2,18 @@
 #include "Helpers.hpp"
 #include <algorithm>
 #include <chrono>
+#include <future>
 #include <iostream>
 #include <thread>
 
 using namespace std::chrono_literals;
 
-Device::Device()
+PhysicalDevice::PhysicalDevice()
 {
     m_serial_socket = std::make_shared<Communication>();
 }
 
-bool Device::TryConnect()
+bool PhysicalDevice::TryConnect()
 {
     // Check if device is configured
     if (m_id < 0 && m_nodes.size() == 0) {
@@ -56,10 +57,10 @@ bool Device::TryConnect()
         std::cout << "Trying " << p << "...\n";
         if (m_serial_socket->Connect(p)) {
             std::cout << "Connected to " << p << "\n";
-            m_serial_socket->Write("ID_G");
-            auto line = m_serial_socket->Readline();
-            auto tok  = Help::TokenizeString(line, ",");
-            if (tok.size() == 2 && tok[0] == "ID_G")
+            // Make sure device is stopped
+            Stop();
+            auto tok = m_serial_socket->WriteAndTokenizeResult("ID_G\n");
+            if (tok.size() == 2 && tok.at(0) == "ID_G")
                 if (auto id = std::stoi(tok[1]); id == m_id)
                     m_connected = true;
 
@@ -85,22 +86,61 @@ bool Device::TryConnect()
     return true;
 }
 
-void Device::Disconnect()
+void PhysicalDevice::Disconnect()
 {
     if (m_serial_socket->IsConnected()) {
         m_serial_socket->Disconnect();
     }
 }
 
-Device::~Device()
+PhysicalDevice::~PhysicalDevice()
 {
     Disconnect();
 }
 
-std::vector<decltype(DataPacket::payload)> Device::GetData() const
+void PhysicalDevice::SetSamplePeriod(uint32_t period_ms)
 {
-    if (m_connected) {
+    auto cmd = "PRDS," + std::to_string(period_ms) + "\n";
+    m_serial_socket->Write(cmd);
+    m_serial_socket->ConfirmTransmission(cmd);
+}
+
+void PhysicalDevice::Start()
+{
+    auto cmd = "STRT\n";
+    m_serial_socket->Write(cmd);
+    m_serial_socket->ConfirmTransmission(cmd);
+}
+
+void PhysicalDevice::Stop()
+{
+    using namespace std::chrono_literals;
+    auto cmd = "STOP\n";
+
+    // Stop transmission
+    m_serial_socket->Write(cmd);
+
+    // Wait for echo from upper write
+    std::promise<void> prom;
+    auto               fut = prom.get_future();
+    std::thread        thr([this, &prom] {while (m_serial_socket->GetRxBufferLen() <= 0); prom.set_value(); });
+
+    if (fut.wait_for(1s) != std::future_status::ready) {
+        auto        dev_info = "ID:" + std::to_string(m_id) + " name:" + m_name;
+        std::string msg("Can't stop device " + dev_info);
+        throw std::runtime_error(msg.c_str());
     }
 
-    return std::vector<decltype(DataPacket::payload)>();
+    thr.join();
+
+    // Clear data while it's there
+    for (auto data_in_buf = m_serial_socket->GetRxBufferLen(); data_in_buf > 0; data_in_buf = m_serial_socket->GetRxBufferLen()) {
+        m_serial_socket->Purge();
+        m_serial_socket->Flush();
+        std::this_thread::sleep_for(10ms);
+    }
+
+    // Make sure we are really stopped by sending the command and checking for confirmation
+    m_serial_socket->Write(cmd);
+    m_serial_socket->ConfirmTransmission(cmd);
 }
