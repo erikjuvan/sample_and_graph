@@ -1,5 +1,6 @@
 #include "Acquisition.hpp"
 #include "Helpers.hpp"
+#include <algorithm>
 #include <fstream>
 #include <future>
 #include <iostream>

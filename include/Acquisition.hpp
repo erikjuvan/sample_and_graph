@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Device.hpp"
+#include <thread>
 
 class Acquisition
 {
