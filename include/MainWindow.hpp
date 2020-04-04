@@ -26,7 +26,8 @@ private:
     std::shared_ptr<mygui::Button> button_save;    // save captured data to file
 
     // Loading data from memory
-    std::shared_ptr<mygui::Button> button_load; // load data from external file, also stops and disconnects all devices
+    std::shared_ptr<mygui::Textbox> textbox_load;
+    std::shared_ptr<mygui::Button>  button_load; // load data from external file, also stops and disconnects all devices
 
     // Used by both use cases
     std::shared_ptr<mygui::Button> button_clear; // clear all data
@@ -45,9 +46,9 @@ public:
     template <typename T>
     using Signal = lsignal::signal<T>;
 
-    Signal<bool()> signal_button_connect_Clicked;
-    Signal<bool()> signal_button_run_Clicked;
-    Signal<void()> signal_button_save_Clicked;
-    Signal<void()> signal_button_load_Clicked;
-    Signal<void()> signal_button_clear_Clicked;
+    Signal<bool()>                   signal_button_connect_Clicked;
+    Signal<bool()>                   signal_button_run_Clicked;
+    Signal<void()>                   signal_button_save_Clicked;
+    Signal<void(std::string const&)> signal_button_load_Clicked;
+    Signal<void()>                   signal_button_clear_Clicked;
 };

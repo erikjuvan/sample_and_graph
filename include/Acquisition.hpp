@@ -13,6 +13,7 @@ public:
     void StartDevices();
     void StopDevices();
     void Save();
+    void Load(std::string const& fname);
     void Clear();
 
 private:

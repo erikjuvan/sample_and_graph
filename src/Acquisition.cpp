@@ -82,7 +82,7 @@ void Acquisition::Save()
         }
     };
 
-    auto          fname = get_available_filename("temp_data");
+    auto          fname = get_available_filename("data");
     std::ofstream write_file(fname, std::ofstream::binary);
 
     if (write_file.is_open()) {
@@ -135,6 +135,16 @@ void Acquisition::Save()
 
     // All is well :)
     std::cout << "Successfully written " << fsize << " bytes to " << fname << std::endl;
+}
+
+void Acquisition::Load(std::string const& fname)
+{
+    std::ifstream            in_file(fname, std::fstream::in);
+    std::string              line;
+    std::vector<std::string> lines;
+
+    while (std::getline(in_file, line))
+        lines.push_back(line);
 }
 
 void Acquisition::Clear()

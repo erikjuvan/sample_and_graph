@@ -35,7 +35,7 @@ void MainWindow::button_run_clicked()
 
 void MainWindow::button_load_clicked()
 {
-    signal_button_load_Clicked();
+    signal_button_load_Clicked(textbox_load->GetText());
 }
 
 void MainWindow::button_clear_clicked()
@@ -57,10 +57,12 @@ MainWindow::MainWindow() :
     button_save = std::make_shared<mygui::Button>(10, 90, "Save");
     button_save->OnClick([this] { signal_button_save_Clicked(); });
 
-    button_load = std::make_shared<mygui::Button>(10, 160, "Load");
+    textbox_load = std::make_shared<mygui::Textbox>(10, 160, "data.txt");
+
+    button_load = std::make_shared<mygui::Button>(10, 200, "Load");
     button_load->OnClick([this] { button_load_clicked(); });
 
-    button_clear = std::make_shared<mygui::Button>(10, 230, "Clear Data");
+    button_clear = std::make_shared<mygui::Button>(10, 270, "Clear Data");
     button_clear->OnClick([this] { button_clear_clicked(); });
 
     // Add widgets
@@ -71,6 +73,7 @@ MainWindow::MainWindow() :
     Add(button_run);
     Add(button_save);
 
+    Add(textbox_load);
     Add(button_load);
 
     Add(button_clear);

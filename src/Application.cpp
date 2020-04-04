@@ -45,10 +45,8 @@ Application::Application()
         m_acquisition->Save();
     });
 
-    m_mainWindow->signal_button_load_Clicked.connect([this] {
-        // Load data
-
-        // If data load successfully disable "live capture" family of widgets (connect, run, save, ...)
+    m_mainWindow->signal_button_load_Clicked.connect([this](std::string const& fname) {
+        m_acquisition->Load(fname);
     });
 
     m_mainWindow->signal_button_clear_Clicked.connect([this] {
