@@ -29,10 +29,12 @@ private:
     std::shared_ptr<mygui::Button> button_load; // load data from external file, also stops and disconnects all devices
 
     // Used by both use cases
-    std::shared_ptr<mygui::Button> button_clear_data; // clear all data
+    std::shared_ptr<mygui::Button> button_clear; // clear all data
 
     void button_connect_clicked();
     void button_run_clicked();
+    void button_load_clicked();
+    void button_clear_clicked();
 
 public:
     // Methods
@@ -47,5 +49,5 @@ public:
     Signal<bool()> signal_button_run_Clicked;
     Signal<void()> signal_button_save_Clicked;
     Signal<void()> signal_button_load_Clicked;
-    Signal<void()> signal_button_clear_data_Clicked;
+    Signal<void()> signal_button_clear_Clicked;
 };

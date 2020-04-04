@@ -2,6 +2,9 @@
 
 void MainWindow::button_connect_clicked()
 {
+    // Clear all data before connecting or disconnecting
+    signal_button_clear_Clicked();
+
     auto connected = signal_button_connect_Clicked();
     if (connected) {
         button_connect->SetText("Connected");
@@ -22,10 +25,22 @@ void MainWindow::button_run_clicked()
     if (running) {
         button_run->SetText("Running");
         button_run->SetColor(sf::Color::Green);
+        button_save->Enabled(false);
     } else {
         button_run->SetText("Run");
         button_run->ResetColor();
+        button_save->Enabled(true);
     }
+}
+
+void MainWindow::button_load_clicked()
+{
+    signal_button_load_Clicked();
+}
+
+void MainWindow::button_clear_clicked()
+{
+    signal_button_clear_Clicked();
 }
 
 MainWindow::MainWindow() :
@@ -43,10 +58,10 @@ MainWindow::MainWindow() :
     button_save->OnClick([this] { signal_button_save_Clicked(); });
 
     button_load = std::make_shared<mygui::Button>(10, 160, "Load");
-    button_load->OnClick([this] { signal_button_load_Clicked(); });
+    button_load->OnClick([this] { button_load_clicked(); });
 
-    button_clear_data = std::make_shared<mygui::Button>(10, 230, "Clear Data");
-    button_clear_data->OnClick([this] { signal_button_clear_data_Clicked(); });
+    button_clear = std::make_shared<mygui::Button>(10, 230, "Clear Data");
+    button_clear->OnClick([this] { button_clear_clicked(); });
 
     // Add widgets
 
@@ -58,7 +73,7 @@ MainWindow::MainWindow() :
 
     Add(button_load);
 
-    Add(button_clear_data);
+    Add(button_clear);
 }
 
 MainWindow::~MainWindow()
