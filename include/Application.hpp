@@ -2,14 +2,6 @@
 
 #include "Acquisition.hpp"
 #include "MainWindow.hpp"
-#include <atomic>
-#include <chrono>
-#include <condition_variable>
-#include <deque>
-#include <iostream>
-#include <optional>
-#include <string>
-#include <thread>
 
 class Application
 {

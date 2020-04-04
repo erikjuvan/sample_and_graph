@@ -1,15 +1,5 @@
 #include "Application.hpp"
-#include "Communication.hpp"
-#include "MainWindow.hpp"
-#include <Helpers.hpp>
-#include <fstream>
-#include <functional>
-#include <future>
-#include <iomanip>
-#include <iostream>
-#include <map>
 #include <mygui/ResourceManager.hpp>
-#include <sstream>
 
 using namespace std::chrono_literals;
 

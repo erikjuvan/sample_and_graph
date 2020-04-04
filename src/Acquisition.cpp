@@ -145,15 +145,29 @@ void Acquisition::Load(std::string const& fname)
 
     while (std::getline(in_file, line))
         lines.push_back(line);
+
+    // Validate file data
+    bool data_valid = false;
+    // ...
+
+    // If validated then clear existing data (devices)
+    if (data_valid) {
+        // Clear any existing devices
+        Clear();
+    } else {
+        std::cout << "Input data invalid!\n";
+        return;
+    }
+
+    // Load data
+    std::cout << "Loading data '" << fname << "' ...\n";
 }
 
 void Acquisition::Clear()
 {
-    for (auto& d : m_physical_devices)
-        d.Clear();
-
-    for (auto& d : m_virtual_devices)
-        d.Clear();
+    std::cout << "Acquisition::Clear\n";
+    m_physical_devices.clear();
+    m_virtual_devices.clear();
 }
 
 void Acquisition::GetData()
@@ -174,6 +188,9 @@ bool Acquisition::ToggleStart()
 
 void Acquisition::StartDevices()
 {
+    if (!m_devices_connected)
+        return;
+
     if (m_devices_running)
         return;
 
@@ -186,6 +203,9 @@ void Acquisition::StartDevices()
 
 void Acquisition::StopDevices()
 {
+    if (!m_devices_connected)
+        return;
+
     if (!m_devices_running)
         return;
 
@@ -209,7 +229,12 @@ bool Acquisition::ToggleConnect()
 void Acquisition::ConnectToDevices()
 {
     if (!m_devices_connected) {
+        // First clear any existing device settings
+        std::cout << "Clearing existing device settings...\n";
+        Clear();
+
         std::cout << "Connecting to devices...\n";
+
         // Initial parameters from file init
         auto tokens = ParseConfigFile("config.txt");
         ConfigureFromTokens(tokens);
@@ -219,6 +244,8 @@ void Acquisition::ConnectToDevices()
         for (auto& dev : m_physical_devices) {
             if (dev.TryConnect())
                 dev.SetSamplePeriod(m_sample_period_ms);
+            else
+                connected = false;
         }
 
         if (!connected)
@@ -226,14 +253,18 @@ void Acquisition::ConnectToDevices()
 
         std::cout << "Connected to all devices\n\n";
         m_devices_connected = connected;
+        StopDevices();
     }
 }
 
 void Acquisition::DisconnectFromDevices()
 {
     if (m_devices_connected) {
-        m_devices_connected = false;
-        m_physical_devices.clear();
+        StopDevices();
+        // Do not clear m_physical_devices, just manually disconnect. This allows saving data after disconnecting.
+        for (auto& dev : m_physical_devices)
+            dev.Disconnect();
         std::cout << "Disconnected from all devices\n\n";
+        m_devices_connected = false;
     }
 }

@@ -2,9 +2,6 @@
 
 void MainWindow::button_connect_clicked()
 {
-    // Clear all data before connecting or disconnecting
-    signal_button_clear_Clicked();
-
     auto connected = signal_button_connect_Clicked();
     if (connected) {
         button_connect->SetText("Connected");
@@ -16,6 +13,7 @@ void MainWindow::button_connect_clicked()
         button_run->SetText("Run");
         button_run->ResetColor();
         button_load->Enabled(true);
+        button_save->Enabled(true);
     }
 }
 
