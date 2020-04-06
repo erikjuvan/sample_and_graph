@@ -270,7 +270,7 @@ int PhysicalDevice::ReadData()
         decltype(m_raw_buffer) vec;
         m_serial_socket->Read(vec, size);
         m_raw_buffer.insert(m_raw_buffer.end(), vec.begin(), vec.end());
-        for (auto dp = DataPacket::Extract(m_raw_buffer); dp;) {
+        for (auto dp = DataPacket::Extract(m_raw_buffer); dp; dp = DataPacket::Extract(m_raw_buffer)) {
             if (dp->payload.size() != m_nodes.size())
                 throw std::length_error("Payload length " + std::to_string(dp->payload.size()) +
                                         " is not equal to nodes size " + std::to_string(m_nodes.size()));

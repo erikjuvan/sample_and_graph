@@ -4,7 +4,7 @@
 #include "lsignal.hpp"
 #include <thread>
 
-class Acquisition
+class Acquisition : public Serializer
 {
 public:
     // Signals
@@ -16,6 +16,9 @@ public:
 
     Acquisition() = default;
     ~Acquisition();
+
+    virtual ser_data_t Serialize() const;
+    virtual void       Deserialize(ser_data_t& data);
 
     bool ToggleConnect(); // return true if connected and false if disconnected
     void ConnectToDevices();

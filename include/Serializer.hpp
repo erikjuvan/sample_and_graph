@@ -8,10 +8,11 @@ class Serializer
 public:
     using ser_data_t = std::vector<char>;
 
+    virtual ser_data_t Serialize() const             = 0;
+    virtual void       Deserialize(ser_data_t& data) = 0;
+
 protected:
     static inline const std::string Delim{","};
-    virtual ser_data_t              Serialize() const             = 0;
-    virtual void                    Deserialize(ser_data_t& data) = 0;
 
     template <typename T>
     static void insert(ser_data_t& data, ser_data_t::iterator it, T const& in, std::string const& delim = Delim)

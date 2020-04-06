@@ -5,13 +5,49 @@
 #include <future>
 #include <iostream>
 #include <map>
+#include <sstream>
 
 Acquisition::~Acquisition()
 {
+    DisconnectFromDevices();
+    Clear();
+
     if (m_thread_read_data.joinable())
         m_thread_read_data.join();
+}
 
-    Clear();
+Serializer::ser_data_t Acquisition::Serialize() const
+{
+    Serializer::ser_data_t data;
+    Serializer::append(data, "sample_period");
+    Serializer::append(data, m_sample_period_ms, "ms\n");
+    for (auto const& dev : m_physical_devices)
+        Serializer::append(data, dev->Serialize());
+    return data;
+}
+
+void Acquisition::Deserialize(ser_data_t& data)
+{
+    auto newline_it = std::find(data.begin(), data.end(), '\n');
+
+    std::string              str(data.begin(), newline_it);
+    std::istringstream       ss(str);
+    std::string              str_tok;
+    std::vector<std::string> tokens;
+
+    while (std::getline(ss, str_tok, Serializer::Delim[0]))
+        tokens.push_back(str_tok);
+
+    if (tokens.size() == 2 && tokens[0] == "sample_period") {
+        m_sample_period_ms = std::stoi(tokens[1]);
+    }
+
+    data = ser_data_t(newline_it + 1 /* skip newline */, data.end());
+    // Check if entry is for a node or a new device
+    while (std::string(data.begin(), std::find(data.begin(), data.end(), ',')) == "device") {
+        m_virtual_devices.push_back(new VirtualDevice);
+        m_virtual_devices.back()->Deserialize(data);
+    }
 }
 
 Acquisition::AllTokens Acquisition::ParseConfigFile(const std::string& file_name)
@@ -70,9 +106,6 @@ void Acquisition::ConfigureFromTokens(Acquisition::AllTokens all_tokens)
 
 void Acquisition::Save() const
 {
-    // Check if there is anything to save
-    // ...
-
     auto get_available_filename = [](std::string base_name) -> auto
     {
         std::string suffix;
@@ -87,48 +120,29 @@ void Acquisition::Save() const
         }
     };
 
-    auto          fname = get_available_filename("data");
-    std::ofstream write_file(fname, std::ofstream::binary);
-
-    if (write_file.is_open()) {
-
-        // First... super purge
-        // ...
+    auto                   fname = get_available_filename("data");
+    std::ofstream          ofs(fname, std::ofstream::out | std::ofstream::binary);
+    std::fstream::pos_type correct_size = 0;
+    if (ofs.is_open()) {
 
         std::cout << "Saving data to " << fname << " ... ";
-
         // Write to file
-        // ...
-
-        write_file.close();
+        auto data = Serialize();
+        ofs.write(data.data(), data.size());
+        correct_size = data.size();
+        ofs.close();
     } else {
         std::cerr << "Error: can't open file for writting!\n";
         return;
     }
 
-    // Check file for correct header m_data
-    /////////////////////////////////////
-    std::ifstream read_file(fname, std::ifstream::binary);
-    if (read_file.is_open()) {
-        // Mem compare
-        if (/*std::memcmp(&tmp, &header, sizeof(Header))*/ 0) {
-            std::cerr << "Error write failed: Incorrect header when reading back file!\n";
-            read_file.close();
-            return;
-        }
-    } else {
-        std::cerr << "Error: can't open file for reading!\n";
-        return;
-    }
-
     // Check file for correct size
     //////////////////////////////
-    std::ifstream           in(fname, std::ifstream::ate | std::ifstream::binary);
-    std::ifstream::pos_type fsize = 0;
-    if (in.is_open()) {
-        fsize                                = in.tellg();
-        std::ifstream::pos_type correct_size = 0; // TODO: get correct size
-        in.close();
+    std::ifstream          ifs(fname, std::ifstream::ate | std::ifstream::binary);
+    std::fstream::pos_type fsize = 0;
+    if (ifs.is_open()) {
+        fsize = ifs.tellg();
+        ifs.close();
         if (fsize != correct_size) {
             std::cerr << "Error write failed: Written " << fsize << " bytes to file. Should have written " << correct_size << " bytes.\n";
             return;
@@ -144,30 +158,20 @@ void Acquisition::Save() const
 
 void Acquisition::Load(std::string const& fname)
 {
-    std::ifstream            in_file(fname, std::fstream::in);
-    std::string              line;
-    std::vector<std::string> lines;
-
-    while (std::getline(in_file, line))
-        lines.push_back(line);
-
-    // Validate file data
-    bool data_valid = false;
-    // ...
-
-    // If validated then clear existing data (devices)
-    if (data_valid) {
-        // Clear any existing devices
-        Clear();
-    } else {
-        std::cout << "Input data invalid!\n";
-        return;
-    }
+    std::ifstream      ifs(fname, std::ifstream::binary);
+    std::ostringstream ss;
 
     // Load data
     std::cout << "Loading data '" << fname << "' ...\n";
 
-    //...
+    ss << ifs.rdbuf();
+    auto       str = ss.str();
+    ser_data_t data(str.begin(), str.end());
+
+    Clear();
+
+    Deserialize(data);
+
     std::vector<BaseDevice const*> devices(m_virtual_devices.begin(), m_virtual_devices.end());
     signal_devices_loaded(devices);
 }
