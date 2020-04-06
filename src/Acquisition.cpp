@@ -5,6 +5,12 @@
 #include <iostream>
 #include <map>
 
+Acquisition::~Acquisition()
+{
+    if (m_thread_read_data.joinable())
+        m_thread_read_data.join();
+}
+
 Acquisition::AllTokens Acquisition::ParseConfigFile(const std::string& file_name)
 {
     std::ifstream                         in_file(file_name);
@@ -41,12 +47,8 @@ void Acquisition::ConfigureFromTokens(Acquisition::AllTokens all_tokens)
         {"device", [this](const LineTokens& args) {m_physical_devices.emplace_back(); if (args.size() > 0) m_physical_devices.back().SetName(args.at(0)); }},
         {"id", [this](const LineTokens& args) { m_physical_devices.back().SetID(std::stoi(args.at(0))); }},
         {"nodes", [this](const LineTokens& args) {
-            std::vector<Node> nodes;
             for (auto arg : args)
-            {
-                nodes.emplace_back(arg);
-            }
-            m_physical_devices.back().SetNodes(nodes); }},
+                m_physical_devices.back().push_back(Node(arg)); }},
     };
 
     for (auto line_tokens : all_tokens) {
@@ -63,7 +65,7 @@ void Acquisition::ConfigureFromTokens(Acquisition::AllTokens all_tokens)
     }
 }
 
-void Acquisition::Save()
+void Acquisition::Save() const
 {
     // Check if there is anything to save
     // ...
@@ -161,6 +163,9 @@ void Acquisition::Load(std::string const& fname)
 
     // Load data
     std::cout << "Loading data '" << fname << "' ...\n";
+
+    //...
+    signal_load_data(m_virtual_devices);
 }
 
 void Acquisition::Clear()
@@ -170,10 +175,24 @@ void Acquisition::Clear()
     m_virtual_devices.clear();
 }
 
-void Acquisition::GetData()
+void Acquisition::ReadData()
 {
     std::future<void> future           = std::async(std::launch::async, [] { return; }); // create a valid future
     std::atomic_bool  parsing_too_slow = false;
+
+    while (m_devices_connected) {
+        if (m_devices_running) {
+            int cnt = 0;
+            for (auto& dev : m_physical_devices)
+                cnt += dev.ReadData();
+
+            if (cnt > 0)
+                signal_new_data(m_physical_devices);
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(
+            m_sample_period_ms > 0 ? m_sample_period_ms : 100));
+    }
 }
 
 bool Acquisition::ToggleStart()
@@ -254,6 +273,7 @@ void Acquisition::ConnectToDevices()
         std::cout << "Connected to all devices\n\n";
         m_devices_connected = connected;
         StopDevices();
+        m_thread_read_data = std::thread([this] { ReadData(); });
     }
 }
 
@@ -266,5 +286,6 @@ void Acquisition::DisconnectFromDevices()
             dev.Disconnect();
         std::cout << "Disconnected from all devices\n\n";
         m_devices_connected = false;
+        m_thread_read_data.join();
     }
 }

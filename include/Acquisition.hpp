@@ -1,18 +1,28 @@
 #pragma once
 
 #include "Device.hpp"
+#include "lsignal.hpp"
 
 class Acquisition
 {
 public:
-    void GetData();
+    // Signals
+    template <typename T>
+    using Signal = lsignal::signal<T>;
+
+    Signal<void(std::vector<PhysicalDevice> const&)> signal_new_data;
+    Signal<void(std::vector<VirtualDevice> const&)>  signal_load_data;
+
+    Acquisition() = default;
+    ~Acquisition();
+
     bool ToggleConnect(); // return true if connected and false if disconnected
     void ConnectToDevices();
     void DisconnectFromDevices();
     bool ToggleStart();
     void StartDevices();
     void StopDevices();
-    void Save();
+    void Save() const;
     void Load(std::string const& fname);
     void Clear();
 
@@ -21,6 +31,7 @@ private:
     using LineTokens = std::vector<std::string>;
 
     // Methods
+    void      ReadData();
     AllTokens ParseConfigFile(const std::string& file_name);
     void      ConfigureFromTokens(AllTokens all_tokens);
 
@@ -31,7 +42,7 @@ private:
     bool m_devices_connected{false};
     bool m_devices_running{false};
 
-    std::thread m_thread_get_data;
+    std::thread m_thread_read_data;
 
-    uint32_t m_sample_period_ms;
+    uint32_t m_sample_period_ms{0};
 };

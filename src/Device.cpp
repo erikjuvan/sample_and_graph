@@ -8,31 +8,44 @@
 
 using namespace std::chrono_literals;
 
-std::optional<DataPacket> DataPacket::Extract(const uint8_t* data, size_t size)
+std::optional<DataPacket> DataPacket::Extract(const uint8_t* data, size_t size, int& remaining_size)
 {
-    if (size < sizeof(HEADER_START_ID))
+    if (size <= sizeof(Header)) // only header, we also need data
         return std::nullopt;
 
     for (int i = 0; i <= (size - sizeof(HEADER_START_ID)); ++i) {
         if (*((uint32_t*)&data[i]) == HEADER_START_ID) {
             DataPacket data_packet;
-            int        remaining_size = size - i;
-            if (remaining_size < sizeof(Header))
+            int        rem_size = size - i;
+            if (rem_size < sizeof(Header))
                 return std::nullopt; // invalid header
             // Copy header
             memcpy(&data_packet.header, &data[i], sizeof(Header));
             int payload_idx = i + sizeof(Header);
-            remaining_size  = size - payload_idx;
-            if (remaining_size < data_packet.header.payload_size)
+            rem_size        = size - payload_idx;
+            if (rem_size < data_packet.header.payload_size)
                 return std::nullopt; // invalid payload
             uint32_t* payload_data = (uint32_t*)&data[payload_idx];
             int       payload_len  = data_packet.header.payload_size / sizeof(decltype(DataPacket::payload)::value_type);
             data_packet.payload.assign(&payload_data[0], &payload_data[payload_len]);
+            rem_size -= data_packet.header.payload_size;
+            remaining_size = rem_size;
             return data_packet;
         }
     }
 
     return std::nullopt;
+}
+
+std::optional<DataPacket> DataPacket::Extract(std::vector<uint8_t>& data)
+{
+    if (data.size() <= 0)
+        return std::nullopt;
+
+    int  remaining_size = 0;
+    auto ret            = Extract(data.data(), data.size(), remaining_size);
+    data.erase(data.begin(), data.begin() + (data.size() - remaining_size));
+    return ret;
 }
 
 Serializer::ser_data_t Node::Serialize() const
@@ -187,6 +200,7 @@ void PhysicalDevice::Disconnect()
     if (m_serial_socket->IsConnected()) {
         m_serial_socket->Disconnect();
     }
+    m_connected = false;
 }
 
 PhysicalDevice::~PhysicalDevice()
@@ -194,7 +208,7 @@ PhysicalDevice::~PhysicalDevice()
     Disconnect();
 }
 
-void PhysicalDevice::SetSamplePeriod(uint32_t period_ms)
+void PhysicalDevice::SetSamplePeriod(uint32_t period_ms) const
 {
     auto cmd = "PRDS," + std::to_string(period_ms) + "\n";
     m_serial_socket->Write(cmd);
@@ -206,6 +220,7 @@ void PhysicalDevice::Start()
     auto cmd = "STRT\n";
     m_serial_socket->Write(cmd);
     m_serial_socket->ConfirmTransmission(cmd);
+    m_running = true;
 }
 
 void PhysicalDevice::Stop()
@@ -239,4 +254,38 @@ void PhysicalDevice::Stop()
     // Make sure we are really stopped by sending the command and checking for confirmation
     m_serial_socket->Write(cmd);
     m_serial_socket->ConfirmTransmission(cmd);
+
+    m_running = false;
+}
+
+// Read data from serial port
+int PhysicalDevice::ReadData()
+{
+    if (!m_running)
+        return 0;
+
+    int cnt = 0;
+
+    if (auto size = m_serial_socket->GetRxBufferLen(); size > 0) {
+        decltype(m_raw_data_buffer) vec;
+        m_serial_socket->Read(vec, size);
+        m_raw_data_buffer.insert(m_raw_data_buffer.end(), vec.begin(), vec.end());
+        for (auto dp = DataPacket::Extract(m_raw_data_buffer); dp;) {
+            if (dp->payload.size() != m_nodes.size())
+                throw std::length_error("Payload length " + std::to_string(dp->payload.size()) +
+                                        " is not equal to nodes size " + std::to_string(m_nodes.size()));
+
+            if (dp->header.packet_id != m_prev_packet_id + 1)
+                std::cout << "Missed packet! Expected packet id:" << m_prev_packet_id + 1 << " received id:" << dp->header.packet_id << "\n";
+
+            m_prev_packet_id = dp->header.packet_id;
+
+            for (int i = 0; i < dp->payload.size(); ++i)
+                m_nodes[i].push_back(dp->payload[i]);
+
+            cnt++;
+        }
+    }
+
+    return cnt;
 }

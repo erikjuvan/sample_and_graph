@@ -8,8 +8,8 @@
 struct DataPacket {
     static constexpr uint32_t HEADER_START_ID = 0xDEADBEEF;
 
-    static std::optional<DataPacket> Extract(const uint8_t* data, size_t size);
-    static std::optional<DataPacket> Extract(std::vector<uint8_t> data) { return Extract(data.data(), data.size()); }
+    static std::optional<DataPacket> Extract(const uint8_t* data, size_t size, int& remaining_size);
+    static std::optional<DataPacket> Extract(std::vector<uint8_t>& data);
 
     struct Header {
         uint32_t header_start_id{0};
@@ -27,14 +27,15 @@ public:
     Node(std::string const& name) :
         m_name(name) {}
     Node() {}
+    ~Node() { clear(); }
 
     virtual ser_data_t           Serialize() const override;
     virtual void                 Deserialize(ser_data_t& data) override;
-    const std::vector<uint32_t>& GetBuffer() const { return m_buffer; }
-    void                         AddToBuffer(uint32_t data) { m_buffer.push_back(data); }
-    void                         AddToBuffer(std::vector<uint32_t> const& data) { m_buffer.insert(m_buffer.end(), data.begin(), data.end()); }
-    void                         Name(std::string const& name) { m_name = name; }
-    std::string                  Name() { return m_name; }
+    const std::vector<uint32_t>& buffer() const { return m_buffer; }
+    void                         push_back(uint32_t data) { m_buffer.push_back(data); }
+    void                         append(std::vector<uint32_t> const& data) { m_buffer.insert(m_buffer.end(), data.begin(), data.end()); }
+    void                         name(std::string const& name) { m_name = name; }
+    std::string                  name() { return m_name; }
     void                         clear()
     {
         m_name.clear();
@@ -52,13 +53,17 @@ public:
     virtual ser_data_t Serialize() const override;
     virtual void       Deserialize(ser_data_t& data) override;
 
-    virtual void SetID(int id) { m_id = id; }
-    virtual void SetName(std::string const& name) { m_name = name; }
-
-    virtual void Clear()
+    virtual void                     SetID(int id) { m_id = id; }
+    virtual void                     SetName(std::string const& name) { m_name = name; }
+    virtual void                     push_back(Node const& node) { m_nodes.push_back(node); }
+    virtual void                     AssignNodes(std::vector<Node> const& nodes) { m_nodes = nodes; }
+    virtual std::vector<Node> const& GetNodes() const { return m_nodes; }
+    virtual Node const&              GetNode(int idx) const { return m_nodes.at(idx); }
+    virtual void                     Clear()
     {
-        for (auto& n : m_nodes)
-            n.clear();
+        m_id = -1;
+        m_name.clear();
+        m_nodes.clear();
     }
 
 protected:
@@ -78,17 +83,18 @@ public:
     PhysicalDevice();
     ~PhysicalDevice();
 
-    void SetNodes(std::vector<Node> const& nodes) { m_nodes = nodes; }
-    void SetSamplePeriod(uint32_t period_ms);
+    void SetSamplePeriod(uint32_t period_ms) const;
     void Start();
     void Stop();
     bool TryConnect();
     void Disconnect();
+    int  ReadData();
 
 private:
     std::shared_ptr<Communication> m_serial_socket;
 
-    int  m_prev_packet_id{0};
-    bool m_connected{false};
-    bool m_running{false};
+    std::vector<uint8_t> m_raw_data_buffer;
+    int                  m_prev_packet_id{0};
+    bool                 m_connected{false};
+    bool                 m_running{false};
 };

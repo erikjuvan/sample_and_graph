@@ -7,6 +7,7 @@
 #include <lsignal.hpp>
 
 #include "Chart.hpp"
+#include "Device.hpp"
 #include "Window.hpp"
 
 class MainWindow : public Window
@@ -41,6 +42,8 @@ public:
     // Methods
     MainWindow();
     ~MainWindow();
+
+    void UpdateChart(std::vector<PhysicalDevice> const& physical_devices);
 
     // Signals
     template <typename T>

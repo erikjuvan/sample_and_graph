@@ -1,5 +1,9 @@
 #include "MainWindow.hpp"
 
+void MainWindow::UpdateChart(std::vector<PhysicalDevice> const& physical_devices)
+{
+}
+
 void MainWindow::button_connect_clicked()
 {
     auto connected = signal_button_connect_Clicked();

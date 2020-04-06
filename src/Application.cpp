@@ -42,6 +42,10 @@ Application::Application()
     m_mainWindow->signal_button_clear_Clicked.connect([this] {
         m_acquisition->Clear();
     });
+
+    m_acquisition->signal_new_data.connect([this](std::vector<PhysicalDevice> const& physical_devices) {
+        m_mainWindow->UpdateChart(physical_devices);
+    });
 }
 
 Application::~Application()
