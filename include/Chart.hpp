@@ -9,24 +9,28 @@ class Signal : public sf::Drawable
 public:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override
     {
-        if (m_draw)
+        if (enabled)
             target.draw(m_curve);
     }
 
-    void EnableDraw() { m_draw = true; }
-    void DisableDraw() { m_draw = false; }
     //void        SetColor(sf::Color const& col);
-    const auto& GetRXData() const { return m_rx_data; }
-    void        ClearRXData() { m_rx_data.clear(); }
+    const auto& Data() const { return m_data; }
+    void        Append(std::vector<uint32_t> const& data) { m_data.insert(m_data.end(), data.begin(), data.end()); }
+    void        Clear()
+    {
+        m_data.clear();
+        name.clear();
+    }
+
+    std::string name;
+    bool        enabled{true};
 
 private:
     int m_sample_period_ms{0};
 
-    std::vector<uint32_t> m_rx_data;
+    std::vector<uint32_t> m_data;
     sf::VertexArray       m_curve;
     sf::FloatRect         m_graph_region;
-
-    bool m_draw{true};
 };
 
 class Chart : public mygui::Object
@@ -53,7 +57,6 @@ private:
     std::vector<sf::Text> m_y_axis_markers;
 
     std::vector<std::shared_ptr<Signal>> m_signals;
-    std::vector<bool>                    m_draw_signal;
     bool                                 m_draw_all_signals = true;
 
     std::shared_ptr<float> m_max_val;

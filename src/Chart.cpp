@@ -17,10 +17,10 @@ Chart::Chart(int x, int y, int w, int h, int num_of_points, float max_val) :
     m_chart_rect = m_chart_region.getGlobalBounds();
 
     m_font.loadFromFile(mygui::ResourceManager::GetSystemFontName());
-    //m_title.setFont(m_font);
-    //m_title.setFillColor(sf::Color::Black);
-    //m_title.setString("Sorting control");
-    //m_title.setPosition(sf::Vector2f(x + w / 2.f - m_title.getLocalBounds().width / 2.f, y));
+    m_title.setFont(m_font);
+    m_title.setFillColor(sf::Color::Black);
+    m_title.setString("Sorting control");
+    m_title.setPosition(sf::Vector2f(x + w / 2.f - m_title.getLocalBounds().width / 2.f, y));
 
     m_x_axis.setFont(m_font);
     m_x_axis.setFillColor(sf::Color::Black);
@@ -51,8 +51,7 @@ void Chart::draw(sf::RenderTarget& target, sf::RenderStates states) const
     for (auto& m : m_y_axis_markers)
         target.draw(m);
     for (int i = 0; i < m_signals.size(); ++i) {
-        if (m_draw_signal[i])
-            target.draw(*m_signals[i]);
+        target.draw(*m_signals[i]);
     }
 }
 
@@ -111,7 +110,6 @@ void Chart::Update()
 void Chart::AddSignal(std::shared_ptr<Signal> const& signal)
 {
     m_signals.push_back(signal);
-    m_draw_signal.push_back(true);
 }
 
 void Chart::ChangeSignal(int idx, std::shared_ptr<Signal> const& signal)
@@ -206,11 +204,12 @@ void Chart::OnKeyPress(const chart_callback_type& f)
 void Chart::ToggleDrawSignal(int idx)
 {
     if (idx > 0 && idx <= m_signals.size())
-        m_draw_signal[idx - 1] = !m_draw_signal[idx - 1];
+        m_signals[idx]->enabled = !m_signals[idx]->enabled;
 }
 
 void Chart::ToggleDrawAllSignals()
 {
     m_draw_all_signals = !m_draw_all_signals;
-    std::fill(m_draw_signal.begin(), m_draw_signal.end(), m_draw_all_signals);
+    for (auto& sig : m_signals)
+        sig->enabled = m_draw_all_signals;
 }

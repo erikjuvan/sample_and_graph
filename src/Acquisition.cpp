@@ -185,9 +185,6 @@ void Acquisition::Clear()
 
 void Acquisition::ReadData()
 {
-    std::future<void> future           = std::async(std::launch::async, [] { return; }); // create a valid future
-    std::atomic_bool  parsing_too_slow = false;
-
     while (m_devices_connected) {
         if (m_devices_running) {
             int cnt = 0;
