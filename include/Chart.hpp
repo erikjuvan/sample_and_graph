@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Device.hpp"
 #include <memory>
 #include <mygui/Object.hpp>
 
@@ -74,6 +75,9 @@ public:
 
     void AddSignal(std::shared_ptr<Signal> const& signal);
     void ChangeSignal(int idx, std::shared_ptr<Signal> const& signal);
+
+    void Update();
+    void LoadDevices(std::vector<BaseDevice const*> const& devices);
 
     // n_lines - number of one type of lines (vertical or horizontal), there are same number of other lines
     void                         CreateGrid(int n_lines);

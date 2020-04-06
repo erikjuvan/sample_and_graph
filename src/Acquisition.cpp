@@ -168,7 +168,7 @@ void Acquisition::Load(std::string const& fname)
     std::cout << "Loading data '" << fname << "' ...\n";
 
     //...
-    std::vector<BaseDevice*> devices(m_virtual_devices.begin(), m_virtual_devices.end());
+    std::vector<BaseDevice const*> devices(m_virtual_devices.begin(), m_virtual_devices.end());
     signal_devices_loaded(devices);
 }
 
@@ -195,8 +195,7 @@ void Acquisition::ReadData()
                 cnt += dev->ReadData();
 
             if (cnt > 0) {
-                std::vector<BaseDevice*> devices(m_physical_devices.begin(), m_physical_devices.end());
-                signal_new_data(devices);
+                signal_new_data();
             }
         }
 
@@ -283,7 +282,7 @@ void Acquisition::ConnectToDevices()
         std::cout << "Connected to all devices\n\n";
         m_devices_connected = connected;
         StopDevices();
-        std::vector<BaseDevice*> devices(m_physical_devices.begin(), m_physical_devices.end());
+        std::vector<BaseDevice const*> devices(m_physical_devices.begin(), m_physical_devices.end());
         signal_devices_loaded(devices);
         m_thread_read_data = std::thread([this] { ReadData(); });
     }

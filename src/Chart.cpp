@@ -100,6 +100,14 @@ bool Chart::Enabled() const
     return m_enabled;
 }
 
+void Chart::LoadDevices(std::vector<BaseDevice const*> const& devices)
+{
+}
+
+void Chart::Update()
+{
+}
+
 void Chart::AddSignal(std::shared_ptr<Signal> const& signal)
 {
     m_signals.push_back(signal);

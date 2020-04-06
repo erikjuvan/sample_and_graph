@@ -43,8 +43,13 @@ public:
     MainWindow();
     ~MainWindow();
 
-    void UpdateChart(std::vector<BaseDevice*> const& devices);
-    void LoadChart(std::vector<BaseDevice*> const& devices);
+    std::shared_ptr<Chart> Chart()
+    {
+        if (chart)
+            return chart;
+        else
+            return nullptr;
+    }
 
     // Signals
     template <typename T>

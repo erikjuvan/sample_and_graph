@@ -11,8 +11,8 @@ public:
     template <typename T>
     using Signal = lsignal::signal<T>;
 
-    Signal<void(std::vector<BaseDevice*> const&)> signal_new_data;
-    Signal<void(std::vector<BaseDevice*> const&)> signal_devices_loaded;
+    Signal<void()>                                      signal_new_data;
+    Signal<void(std::vector<BaseDevice const*> const&)> signal_devices_loaded;
 
     Acquisition() = default;
     ~Acquisition();

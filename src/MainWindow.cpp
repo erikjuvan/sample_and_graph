@@ -1,13 +1,5 @@
 #include "MainWindow.hpp"
 
-void MainWindow::UpdateChart(std::vector<BaseDevice*> const& devices)
-{
-}
-
-void MainWindow::LoadChart(std::vector<BaseDevice*> const& devices)
-{
-}
-
 void MainWindow::button_connect_clicked()
 {
     auto connected = signal_button_connect_Clicked();
@@ -52,7 +44,7 @@ void MainWindow::button_clear_clicked()
 MainWindow::MainWindow() :
     Window(1100, 600, "Sample and Graph", sf::Style::None | sf::Style::Close)
 {
-    chart = std::make_shared<Chart>(100, 10, 990, 580, 100, 100);
+    chart = std::make_shared<::Chart>(100, 10, 990, 580, 100, 100);
 
     button_connect = std::make_shared<mygui::Button>(10, 10, "Connect");
     button_connect->OnClick([this] { button_connect_clicked(); });
