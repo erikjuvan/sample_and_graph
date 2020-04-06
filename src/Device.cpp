@@ -267,10 +267,10 @@ int PhysicalDevice::ReadData()
     int cnt = 0;
 
     if (auto size = m_serial_socket->GetRxBufferLen(); size > 0) {
-        decltype(m_raw_data_buffer) vec;
+        decltype(m_raw_buffer) vec;
         m_serial_socket->Read(vec, size);
-        m_raw_data_buffer.insert(m_raw_data_buffer.end(), vec.begin(), vec.end());
-        for (auto dp = DataPacket::Extract(m_raw_data_buffer); dp;) {
+        m_raw_buffer.insert(m_raw_buffer.end(), vec.begin(), vec.end());
+        for (auto dp = DataPacket::Extract(m_raw_buffer); dp;) {
             if (dp->payload.size() != m_nodes.size())
                 throw std::length_error("Payload length " + std::to_string(dp->payload.size()) +
                                         " is not equal to nodes size " + std::to_string(m_nodes.size()));
