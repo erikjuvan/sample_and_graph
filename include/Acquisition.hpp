@@ -2,6 +2,7 @@
 
 #include "Device.hpp"
 #include "lsignal.hpp"
+#include <thread>
 
 class Acquisition
 {
