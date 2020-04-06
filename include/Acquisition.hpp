@@ -11,8 +11,8 @@ public:
     template <typename T>
     using Signal = lsignal::signal<T>;
 
-    Signal<void(std::vector<PhysicalDevice> const&)> signal_new_data;
-    Signal<void(std::vector<VirtualDevice> const&)>  signal_load_data;
+    Signal<void(std::vector<BaseDevice*> const&)> signal_new_data;
+    Signal<void(std::vector<BaseDevice*> const&)> signal_devices_loaded;
 
     Acquisition() = default;
     ~Acquisition();
@@ -37,8 +37,8 @@ private:
     void      ConfigureFromTokens(AllTokens all_tokens);
 
     // Members
-    std::vector<PhysicalDevice> m_physical_devices;
-    std::vector<VirtualDevice>  m_virtual_devices;
+    std::vector<PhysicalDevice*> m_physical_devices;
+    std::vector<VirtualDevice*>  m_virtual_devices;
 
     bool m_devices_connected{false};
     bool m_devices_running{false};

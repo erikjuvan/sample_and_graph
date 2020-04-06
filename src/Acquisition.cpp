@@ -10,6 +10,8 @@ Acquisition::~Acquisition()
 {
     if (m_thread_read_data.joinable())
         m_thread_read_data.join();
+
+    Clear();
 }
 
 Acquisition::AllTokens Acquisition::ParseConfigFile(const std::string& file_name)
@@ -45,11 +47,11 @@ void Acquisition::ConfigureFromTokens(Acquisition::AllTokens all_tokens)
              else                                                   // seconds
                  m_sample_period_ms = std::stoi(args.at(0)) * 1000; // convert seconds to ms
          }},
-        {"device", [this](const LineTokens& args) {m_physical_devices.emplace_back(); if (args.size() > 0) m_physical_devices.back().SetName(args.at(0)); }},
-        {"id", [this](const LineTokens& args) { m_physical_devices.back().SetID(std::stoi(args.at(0))); }},
+        {"device", [this](const LineTokens& args) {m_physical_devices.push_back(new PhysicalDevice); if (args.size() > 0) m_physical_devices.back()->SetName(args.at(0)); }},
+        {"id", [this](const LineTokens& args) { m_physical_devices.back()->SetID(std::stoi(args.at(0))); }},
         {"nodes", [this](const LineTokens& args) {
             for (auto arg : args)
-                m_physical_devices.back().push_back(Node(arg)); }},
+                m_physical_devices.back()->push_back(Node(arg)); }},
     };
 
     for (auto line_tokens : all_tokens) {
@@ -166,12 +168,17 @@ void Acquisition::Load(std::string const& fname)
     std::cout << "Loading data '" << fname << "' ...\n";
 
     //...
-    signal_load_data(m_virtual_devices);
+    std::vector<BaseDevice*> devices(m_virtual_devices.begin(), m_virtual_devices.end());
+    signal_devices_loaded(devices);
 }
 
 void Acquisition::Clear()
 {
     std::cout << "Acquisition::Clear\n";
+    for (auto& d : m_physical_devices)
+        delete d;
+    for (auto& d : m_virtual_devices)
+        delete d;
     m_physical_devices.clear();
     m_virtual_devices.clear();
 }
@@ -185,10 +192,12 @@ void Acquisition::ReadData()
         if (m_devices_running) {
             int cnt = 0;
             for (auto& dev : m_physical_devices)
-                cnt += dev.ReadData();
+                cnt += dev->ReadData();
 
-            if (cnt > 0)
-                signal_new_data(m_physical_devices);
+            if (cnt > 0) {
+                std::vector<BaseDevice*> devices(m_physical_devices.begin(), m_physical_devices.end());
+                signal_new_data(devices);
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(
@@ -215,7 +224,7 @@ void Acquisition::StartDevices()
         return;
 
     for (auto& dev : m_physical_devices)
-        dev.Start();
+        dev->Start();
 
     std::cout << "Started data acquisition\n\n";
     m_devices_running = true;
@@ -230,7 +239,7 @@ void Acquisition::StopDevices()
         return;
 
     for (auto& dev : m_physical_devices)
-        dev.Stop();
+        dev->Stop();
 
     std::cout << "Stopped data acquisition\n\n";
     m_devices_running = false;
@@ -262,8 +271,8 @@ void Acquisition::ConnectToDevices()
         // Connect to configured devices
         bool connected = true;
         for (auto& dev : m_physical_devices) {
-            if (dev.TryConnect())
-                dev.SetSamplePeriod(m_sample_period_ms);
+            if (dev->TryConnect())
+                dev->SetSamplePeriod(m_sample_period_ms);
             else
                 connected = false;
         }
@@ -274,6 +283,8 @@ void Acquisition::ConnectToDevices()
         std::cout << "Connected to all devices\n\n";
         m_devices_connected = connected;
         StopDevices();
+        std::vector<BaseDevice*> devices(m_physical_devices.begin(), m_physical_devices.end());
+        signal_devices_loaded(devices);
         m_thread_read_data = std::thread([this] { ReadData(); });
     }
 }
@@ -284,7 +295,7 @@ void Acquisition::DisconnectFromDevices()
         StopDevices();
         // Do not clear m_physical_devices, just manually disconnect. This allows saving data after disconnecting.
         for (auto& dev : m_physical_devices)
-            dev.Disconnect();
+            dev->Disconnect();
         std::cout << "Disconnected from all devices\n\n";
         m_devices_connected = false;
         m_thread_read_data.join();

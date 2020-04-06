@@ -43,8 +43,12 @@ Application::Application()
         m_acquisition->Clear();
     });
 
-    m_acquisition->signal_new_data.connect([this](std::vector<PhysicalDevice> const& physical_devices) {
-        m_mainWindow->UpdateChart(physical_devices);
+    m_acquisition->signal_new_data.connect([this](std::vector<BaseDevice*> const& devices) {
+        m_mainWindow->UpdateChart(devices);
+    });
+
+    m_acquisition->signal_devices_loaded.connect([this](std::vector<BaseDevice*> const& devices) {
+        m_mainWindow->LoadChart(devices);
     });
 }
 

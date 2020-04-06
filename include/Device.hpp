@@ -54,7 +54,9 @@ public:
     virtual void       Deserialize(ser_data_t& data) override;
 
     virtual void                     SetID(int id) { m_id = id; }
+    virtual int                      GetID() { return m_id; }
     virtual void                     SetName(std::string const& name) { m_name = name; }
+    virtual std::string const&       GetName() { return m_name; }
     virtual void                     push_back(Node const& node) { m_nodes.push_back(node); }
     virtual void                     AssignNodes(std::vector<Node> const& nodes) { m_nodes = nodes; }
     virtual std::vector<Node> const& GetNodes() const { return m_nodes; }

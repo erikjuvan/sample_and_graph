@@ -1,6 +1,10 @@
 #include "MainWindow.hpp"
 
-void MainWindow::UpdateChart(std::vector<PhysicalDevice> const& physical_devices)
+void MainWindow::UpdateChart(std::vector<BaseDevice*> const& devices)
+{
+}
+
+void MainWindow::LoadChart(std::vector<BaseDevice*> const& devices)
 {
 }
 

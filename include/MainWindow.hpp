@@ -43,7 +43,8 @@ public:
     MainWindow();
     ~MainWindow();
 
-    void UpdateChart(std::vector<PhysicalDevice> const& physical_devices);
+    void UpdateChart(std::vector<BaseDevice*> const& devices);
+    void LoadChart(std::vector<BaseDevice*> const& devices);
 
     // Signals
     template <typename T>
