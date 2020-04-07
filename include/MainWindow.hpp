@@ -51,13 +51,9 @@ public:
             return nullptr;
     }
 
-    // Signals
-    template <typename T>
-    using Signal = lsignal::signal<T>;
-
-    Signal<bool()>                   signal_button_connect_Clicked;
-    Signal<bool()>                   signal_button_run_Clicked;
-    Signal<void()>                   signal_button_save_Clicked;
-    Signal<void(std::string const&)> signal_button_load_Clicked;
-    Signal<void()>                   signal_button_clear_Clicked;
+    lsignal::signal<bool()>                   signal_button_connect_Clicked;
+    lsignal::signal<bool()>                   signal_button_run_Clicked;
+    lsignal::signal<void()>                   signal_button_save_Clicked;
+    lsignal::signal<void(std::string const&)> signal_button_load_Clicked;
+    lsignal::signal<void()>                   signal_button_clear_Clicked;
 };

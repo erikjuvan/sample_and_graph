@@ -8,11 +8,8 @@ class Acquisition : public Serializer
 {
 public:
     // Signals
-    template <typename T>
-    using Signal = lsignal::signal<T>;
-
-    Signal<void()>                                      signal_new_data;
-    Signal<void(std::vector<BaseDevice const*> const&)> signal_devices_loaded;
+    lsignal::signal<void(std::vector<BaseDevice const*> const&)> signal_new_data;
+    lsignal::signal<void(std::vector<BaseDevice const*> const&)> signal_devices_loaded;
 
     Acquisition() = default;
     ~Acquisition();
