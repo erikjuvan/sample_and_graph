@@ -23,6 +23,7 @@ public:
     void         Create(int w, int h, const std::string& title, sf::Uint32 style = sf::Style::Default);
     void         Close();
     void         Add(std::shared_ptr<Widget> const& widget);
+    void         Remove(std::shared_ptr<Widget> const& widget);
     void         Update();
     void         SetVisible(bool visible);
     bool         IsOpen() const;

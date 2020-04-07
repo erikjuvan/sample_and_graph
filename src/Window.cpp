@@ -38,6 +38,13 @@ void Window::Add(std::shared_ptr<Widget> const& widget)
     m_widgets.push_back(widget);
 }
 
+void Window::Remove(std::shared_ptr<Widget> const& widget)
+{
+    auto it = std::find(m_widgets.begin(), m_widgets.end(), widget);
+    if (it != m_widgets.end())
+        m_widgets.erase(it);
+}
+
 void Window::Draw()
 {
     m_window->clear(backgroundColor);
