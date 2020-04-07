@@ -35,7 +35,7 @@ Chart::Chart(int x, int y, int w, int h, int num_of_points, float max_val) :
     m_y_axis.setString("Temperature / *C");
     m_y_axis.setPosition(sf::Vector2f(x + m_margin / 4.f, y + h / 2.f + m_y_axis.getLocalBounds().width / 2.f));
 
-    CreateGrid(10);
+    CreateGrid(9);
 }
 
 void Chart::draw(sf::RenderTarget& target, sf::RenderStates states) const
@@ -203,7 +203,7 @@ void Chart::OnKeyPress(const chart_callback_type& f)
 
 void Chart::ToggleDrawSignal(int idx)
 {
-    if (idx > 0 && idx <= m_signals.size())
+    if (idx >= 0 && idx < m_signals.size())
         m_signals[idx]->enabled = !m_signals[idx]->enabled;
 }
 
