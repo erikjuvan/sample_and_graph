@@ -5,6 +5,8 @@ Window::Window(int w, int h, const std::string& title, sf::Uint32 style)
     m_window = std::make_unique<sf::RenderWindow>(sf::VideoMode(w, h), title, style);
     m_event  = std::make_unique<sf::Event>();
 
+    // Make room for plenty widgets, to avoid reallocations.
+    m_widgets.reserve(100);
     //m_window->setFramerateLimit(60); // currently already m_running at 60 fps even without limit
 }
 
@@ -15,8 +17,8 @@ void Window::Events()
             m_window->close();
         }
 
-        for (auto& w : m_widgets) {
-            w->Handle(*m_event);
+        for (int i = 0; i < m_widgets.size(); ++i) {
+            m_widgets[i]->Handle(*m_event);
         }
     }
 }
