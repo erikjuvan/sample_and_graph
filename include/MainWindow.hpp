@@ -33,6 +33,9 @@ private:
     // Used by both use cases
     std::shared_ptr<mygui::Button> button_clear; // clear all data
 
+    // Checkboxes to enable/disable drawing of signals
+    std::vector<std::shared_ptr<mygui::Checkbox>> checkboxes_signal_enabled;
+
     void button_connect_clicked();
     void button_run_clicked();
     void button_load_clicked();

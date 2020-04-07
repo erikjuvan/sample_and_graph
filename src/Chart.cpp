@@ -101,10 +101,27 @@ bool Chart::Enabled() const
 
 void Chart::LoadDevices(std::vector<BaseDevice const*> const& devices)
 {
+    m_signals.clear();
+
+    for (auto& d : devices) {
+        for (auto& n : d->GetNodes()) {
+            m_signals.push_back(std::make_shared<Signal>(m_chart_rect));
+            m_signals.back()->name = n.name();
+        }
+    }
+    signal_configured(m_signals);
 }
 
-void Chart::Update()
+void Chart::Update(std::vector<BaseDevice const*> const& devices)
 {
+    auto it = m_signals.begin();
+    for (auto& d : devices) {
+        for (auto& n : d->GetNodes()) {
+            auto vec = std::vector<uint32_t>(n.buffer().end() - (n.buffer().size() - (*it)->Data().size()), n.buffer().end());
+            (*it)->Append(vec);
+            it++;
+        }
+    }
 }
 
 void Chart::AddSignal(std::shared_ptr<Signal> const& signal)

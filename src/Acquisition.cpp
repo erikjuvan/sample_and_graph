@@ -196,7 +196,8 @@ void Acquisition::ReadData()
                 cnt += dev->ReadData();
 
             if (cnt > 0) {
-                signal_new_data();
+                std::vector<BaseDevice const*> devices(m_physical_devices.begin(), m_physical_devices.end());
+                signal_new_data(devices);
             }
         }
 

@@ -1,12 +1,19 @@
 #pragma once
 
 #include "Device.hpp"
+#include "lsignal.hpp"
 #include <memory>
 #include <mygui/Object.hpp>
 
 class Signal : public sf::Drawable
 {
 public:
+    Signal(const sf::FloatRect& region) :
+        m_graph_region(region)
+    {
+        m_curve.setPrimitiveType(sf::PrimitiveType::LineStrip);
+    }
+
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override
     {
         if (enabled)
@@ -15,8 +22,27 @@ public:
 
     //void        SetColor(sf::Color const& col);
     const auto& Data() const { return m_data; }
-    void        Append(std::vector<uint32_t> const& data) { m_data.insert(m_data.end(), data.begin(), data.end()); }
-    void        Clear()
+    void        Append(std::vector<uint32_t> const& data)
+    {
+        const float y_zero = m_graph_region.top + m_graph_region.height;
+
+        for (int i = m_curve.getVertexCount() < m_graph_region.width ? 0 : m_curve.getVertexCount() - m_graph_region.width; i < m_curve.getVertexCount(); ++i) {
+            auto& vrtx = m_curve[i];
+            if (vrtx.position.x > m_graph_region.left) {
+                vrtx.position.x -= data.size();
+                if (vrtx.position.x <= m_graph_region.left)
+                    vrtx.color = sf::Color(0, 0, 0, 0); // hide vertex
+            }
+        }
+
+        int xpos = m_graph_region.left + m_graph_region.width - 1 - data.size();
+        for (auto d : data) {
+            m_data.push_back(d);
+            m_curve.append({sf::Vector2f(xpos++, y_zero - (d / 1300.f /*max_val*/) * m_graph_region.height + 1), sf::Color::Black});
+        }
+    }
+
+    void Clear()
     {
         m_data.clear();
         name.clear();
@@ -79,7 +105,7 @@ public:
     void AddSignal(std::shared_ptr<Signal> const& signal);
     void ChangeSignal(int idx, std::shared_ptr<Signal> const& signal);
 
-    void Update();
+    void Update(std::vector<BaseDevice const*> const& devices);
     void LoadDevices(std::vector<BaseDevice const*> const& devices);
 
     // n_lines - number of one type of lines (vertical or horizontal), there are same number of other lines
@@ -92,4 +118,7 @@ public:
 
     // Actions
     void OnKeyPress(const chart_callback_type& f);
+
+    // Signals
+    lsignal::signal<void(std::vector<std::shared_ptr<Signal>> const&)> signal_configured;
 };
