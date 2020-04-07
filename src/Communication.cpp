@@ -93,6 +93,17 @@ size_t Communication::Read(std::vector<uint8_t>& buffer, size_t size)
         return 0;
 }
 
+// Readall and append to buffer (serial library does the appending)
+size_t Communication::ReadAll(std::vector<uint8_t>& buffer)
+{
+    std::scoped_lock<std::mutex> sl(m_mtx);
+    if (IsConnected()) {
+        auto size = m_serial.available();
+        return m_serial.read(buffer, size);
+    } else
+        return 0;
+}
+
 std::string Communication::Readline()
 {
     std::scoped_lock<std::mutex> sl(m_mtx);

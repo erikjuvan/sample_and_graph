@@ -96,7 +96,7 @@ private:
     std::shared_ptr<Communication> m_serial_socket;
 
     std::vector<uint8_t> m_raw_buffer;
-    int                  m_prev_packet_id{0};
+    std::optional<int>   m_prev_packet_id;
     bool                 m_connected{false};
     bool                 m_running{false};
 };

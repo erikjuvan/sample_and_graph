@@ -197,6 +197,9 @@ bool PhysicalDevice::TryConnect()
 
 void PhysicalDevice::Disconnect()
 {
+    if (m_running)
+        Stop();
+
     if (m_serial_socket->IsConnected()) {
         m_serial_socket->Disconnect();
     }
@@ -255,6 +258,9 @@ void PhysicalDevice::Stop()
     m_serial_socket->Write(cmd);
     m_serial_socket->ConfirmTransmission(cmd);
 
+    // Reset m_prev_packet_id since we lost some while stopping device
+    m_prev_packet_id = std::nullopt;
+
     m_running = false;
 }
 
@@ -275,8 +281,8 @@ int PhysicalDevice::ReadData()
                 throw std::length_error("Payload length " + std::to_string(dp->payload.size()) +
                                         " is not equal to nodes size " + std::to_string(m_nodes.size()));
 
-            if (dp->header.packet_id != m_prev_packet_id + 1)
-                std::cout << "Missed packet! Expected packet id:" << m_prev_packet_id + 1 << " received id:" << dp->header.packet_id << "\n";
+            if (m_prev_packet_id && dp->header.packet_id != *m_prev_packet_id + 1)
+                std::cout << "Missed packet! Expected packet id:" << *m_prev_packet_id + 1 << " received id:" << dp->header.packet_id << "\n";
 
             m_prev_packet_id = dp->header.packet_id;
 
