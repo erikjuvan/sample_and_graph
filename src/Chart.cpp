@@ -50,8 +50,8 @@ void Chart::draw(sf::RenderTarget& target, sf::RenderStates states) const
         target.draw(m);
     for (auto& m : m_y_axis_markers)
         target.draw(m);
-    for (int i = 0; i < m_signals.size(); ++i) {
-        target.draw(*m_signals[i]);
+    for (int i = 0; i < m_chart_signals.size(); ++i) {
+        target.draw(*m_chart_signals[i]);
     }
 }
 
@@ -99,40 +99,67 @@ bool Chart::Enabled() const
     return m_enabled;
 }
 
+// Convert data from raw ADC voltage to NTC temperature
+void Chart::ConvertData(std::vector<float>& data)
+{
+    // Calculate degrees from raw data
+    // NTC equation
+    const float vcc   = 3.0;
+    const float r1    = 5600.f;
+    const float beta  = 4920; // datasheet
+    const float rntc0 = 33000.f;
+    const float t0    = 298.15; // 25 *C
+    const float rinf  = rntc0 * std::exp(-beta / t0);
+    for (auto& y : data) {
+        auto vntc = vcc * y / 4096.f;
+        // Vntc = Vcc * Rntc / (R1 + Rntc);
+        // Vntc * R1 + Vntc * Rntc = Vcc * Rntc
+        // Rntc * (Vcc - Vntc) = Vntc * R1
+        // Rntc = Vntc / (Vcc - Vntc) * R1;
+        float rntc = vntc / (vcc - vntc) * r1;
+
+        // Temperature: Tntc = beta / (ln(Rntc/Rinf))
+        y = beta / std::log(rntc / rinf) - 273.15;
+    }
+}
+
 void Chart::LoadDevices(std::vector<BaseDevice const*> const& devices)
 {
-    m_signals.clear();
+    m_chart_signals.clear();
 
     for (auto& d : devices) {
         for (auto& n : d->GetNodes()) {
-            m_signals.push_back(std::make_shared<Signal>(m_chart_rect));
-            m_signals.back()->name = n.name();
+            m_chart_signals.push_back(std::make_shared<ChartSignal>(m_chart_rect));
+            m_chart_signals.back()->Name(n.name());
         }
     }
-    signal_configured(m_signals);
+    signal_chart_signals_configured(m_chart_signals);
 }
 
 void Chart::Update(std::vector<BaseDevice const*> const& devices)
 {
-    auto it = m_signals.begin();
+    auto it = m_chart_signals.begin();
     for (auto& d : devices) {
         for (auto& n : d->GetNodes()) {
-            auto vec = std::vector<uint32_t>(n.buffer().end() - (n.buffer().size() - (*it)->Data().size()), n.buffer().end());
+            auto vec = std::vector<float>(n.buffer().end() - (n.buffer().size() - (*it)->Data().size()), n.buffer().end());
+
+            ConvertData(vec);
+
             (*it)->Append(vec);
             it++;
         }
     }
 }
 
-void Chart::AddSignal(std::shared_ptr<Signal> const& signal)
+void Chart::AddChartSignal(std::shared_ptr<ChartSignal> const& csignal)
 {
-    m_signals.push_back(signal);
+    m_chart_signals.push_back(csignal);
 }
 
-void Chart::ChangeSignal(int idx, std::shared_ptr<Signal> const& signal)
+void Chart::ChangeChartSignal(int idx, std::shared_ptr<ChartSignal> const& csignal)
 {
-    if (idx < m_signals.size()) {
-        m_signals[idx] = signal;
+    if (idx < m_chart_signals.size()) {
+        m_chart_signals[idx] = csignal;
     }
 }
 
@@ -218,15 +245,15 @@ void Chart::OnKeyPress(const chart_callback_type& f)
     m_onKeyPress = f;
 }
 
-void Chart::ToggleDrawSignal(int idx)
+void Chart::ToggleDrawChartSignal(int idx)
 {
-    if (idx >= 0 && idx < m_signals.size())
-        m_signals[idx]->enabled = !m_signals[idx]->enabled;
+    if (idx >= 0 && idx < m_chart_signals.size())
+        m_chart_signals[idx]->enabled = !m_chart_signals[idx]->enabled;
 }
 
-void Chart::ToggleDrawAllSignals()
+void Chart::ToggleDrawAllChartSignals()
 {
-    m_draw_all_signals = !m_draw_all_signals;
-    for (auto& sig : m_signals)
-        sig->enabled = m_draw_all_signals;
+    m_draw_all_chart_signals = !m_draw_all_chart_signals;
+    for (auto& sig : m_chart_signals)
+        sig->enabled = m_draw_all_chart_signals;
 }

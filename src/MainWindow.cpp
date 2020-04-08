@@ -46,7 +46,7 @@ MainWindow::MainWindow() :
 {
     chart = std::make_shared<::Chart>(100, 10, 990, 580, 100, 100);
 
-    chart->signal_configured.connect([this](std::vector<std::shared_ptr<Signal>> const& signals) {
+    chart->signal_chart_signals_configured.connect([this](std::vector<std::shared_ptr<ChartSignal>> const& signals) {
         if (checkboxes_signal_enabled.size() > 0) {
             for (auto const& cb : checkboxes_signal_enabled)
                 Remove(cb);
@@ -64,10 +64,10 @@ MainWindow::MainWindow() :
             int y      = y_offset + (i % modulo) * spacing;
             int x      = 10 + column * 45;
 
-            checkboxes_signal_enabled.push_back(std::make_shared<mygui::Checkbox>(x, y, signals[i]->name, 13, 13, 13));
+            checkboxes_signal_enabled.push_back(std::make_shared<mygui::Checkbox>(x, y, signals[i]->Name(), 13, 13, 13));
             checkboxes_signal_enabled.back()->Checked(true);
             Add(checkboxes_signal_enabled.back());
-            checkboxes_signal_enabled.back()->OnClick([this, i] { chart->ToggleDrawSignal(i); });
+            checkboxes_signal_enabled.back()->OnClick([this, i] { chart->ToggleDrawChartSignal(i); });
         }
     });
 
