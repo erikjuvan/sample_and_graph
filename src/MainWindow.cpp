@@ -46,6 +46,31 @@ MainWindow::MainWindow() :
 {
     chart = std::make_shared<::Chart>(100, 10, 990, 580, 100, 100);
 
+    chart->signal_chart_signals_configured.connect([this](std::vector<std::shared_ptr<ChartSignal>> const& signals) {
+        if (checkboxes_signal_enabled.size() > 0) {
+            for (auto const& cb : checkboxes_signal_enabled)
+                Remove(cb);
+
+            checkboxes_signal_enabled.clear();
+        }
+
+        const int spacing  = 23;
+        const int y_offset = 15 + button_clear->GetGlobalBounds().top + button_clear->GetGlobalBounds().height;
+        int       modulo   = (m_window->getSize().y - button_clear->GetGlobalBounds().top -
+                      button_clear->GetGlobalBounds().height - spacing) /
+                     spacing;
+        for (int i = 0; i < signals.size(); ++i) {
+            int column = i / modulo;
+            int y      = y_offset + (i % modulo) * spacing;
+            int x      = 10 + column * 45;
+
+            checkboxes_signal_enabled.push_back(std::make_shared<mygui::Checkbox>(x, y, signals[i]->Name(), 13, 13, 13));
+            checkboxes_signal_enabled.back()->Checked(true);
+            Add(checkboxes_signal_enabled.back());
+            checkboxes_signal_enabled.back()->OnClick([this, i] { chart->ToggleDrawChartSignal(i); });
+        }
+    });
+
     button_connect = std::make_shared<mygui::Button>(10, 10, "Connect");
     button_connect->OnClick([this] { button_connect_clicked(); });
 
