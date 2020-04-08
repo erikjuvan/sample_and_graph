@@ -40,6 +40,7 @@ Application::Application()
     });
 
     m_mainWindow->signal_button_clear_Clicked.connect([this] {
+        m_mainWindow->Chart()->ClearChartSignals();
         m_acquisition->Clear();
     });
 

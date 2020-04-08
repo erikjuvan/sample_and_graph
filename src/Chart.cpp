@@ -257,3 +257,9 @@ void Chart::ToggleDrawAllChartSignals()
     for (auto& sig : m_chart_signals)
         sig->enabled = m_draw_all_chart_signals;
 }
+
+void Chart::ClearChartSignals()
+{
+    for (auto& cs : m_chart_signals)
+        cs->Clear();
+}

@@ -50,8 +50,9 @@ public:
     void Clear()
     {
         m_data.clear();
-        m_name.clear();
-        m_text.setString("");
+        auto size = m_curve.size();
+        m_curve.clear();
+        m_curve.resize(size);
     }
 
     void Name(std::string name)
@@ -135,6 +136,8 @@ public:
     std::shared_ptr<float const> MaxVal();
     void                         ToggleDrawChartSignal(int idx);
     void                         ToggleDrawAllChartSignals();
+
+    void ClearChartSignals();
 
     // Actions
     void OnKeyPress(const chart_callback_type& f);

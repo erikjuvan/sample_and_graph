@@ -26,6 +26,7 @@ public:
     void Save() const;
     void Load(std::string const& fname);
     void Clear();
+    void Reset();
 
 private:
     using AllTokens  = std::vector<std::vector<std::string>>;

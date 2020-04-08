@@ -10,7 +10,7 @@
 Acquisition::~Acquisition()
 {
     DisconnectFromDevices();
-    Clear();
+    Reset();
 
     if (m_thread_read_data.joinable())
         m_thread_read_data.join();
@@ -168,7 +168,7 @@ void Acquisition::Load(std::string const& fname)
     auto       str = ss.str();
     ser_data_t data(str.begin(), str.end());
 
-    Clear();
+    Reset();
 
     Deserialize(data);
 
@@ -179,6 +179,16 @@ void Acquisition::Load(std::string const& fname)
 void Acquisition::Clear()
 {
     std::cout << "Acquisition::Clear\n";
+
+    for (auto& d : m_physical_devices)
+        d->Clear();
+    for (auto& d : m_virtual_devices)
+        d->Clear();
+}
+
+void Acquisition::Reset()
+{
+    std::cout << "Acquisition::Reset\n";
     for (auto& d : m_physical_devices)
         delete d;
     for (auto& d : m_virtual_devices)
@@ -261,7 +271,7 @@ void Acquisition::ConnectToDevices()
     if (!m_devices_connected) {
         // First clear any existing device settings
         std::cout << "Clearing existing device settings...\n";
-        Clear();
+        Reset();
 
         std::cout << "Connecting to devices...\n";
 
