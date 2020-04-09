@@ -19,8 +19,8 @@ Acquisition::~Acquisition()
 Serializer::ser_data_t Acquisition::Serialize() const
 {
     Serializer::ser_data_t data;
-    Serializer::append(data, "sample_period");
-    Serializer::append(data, m_sample_period_ms, "ms\n");
+    Serializer::append(data, "sampling_period");
+    Serializer::append(data, m_sampling_period_ms, "ms\n");
     for (auto const& dev : m_physical_devices)
         Serializer::append(data, dev->Serialize());
     return data;
@@ -38,8 +38,8 @@ void Acquisition::Deserialize(ser_data_t& data)
     while (std::getline(ss, str_tok, Serializer::Delim[0]))
         tokens.push_back(str_tok);
 
-    if (tokens.size() == 2 && tokens[0] == "sample_period") {
-        m_sample_period_ms = std::stoi(tokens[1]);
+    if (tokens.size() == 2 && tokens[0] == "sampling_period") {
+        m_sampling_period_ms = std::stoi(tokens[1]);
     }
 
     data = ser_data_t(newline_it + 1 /* skip newline */, data.end());
@@ -76,12 +76,12 @@ Acquisition::AllTokens Acquisition::ParseConfigFile(const std::string& file_name
 void Acquisition::ConfigureFromTokens(Acquisition::AllTokens all_tokens)
 {
     std::map<std::string, std::function<void(const LineTokens&)>> commands{
-        {"sample_period", [this](const LineTokens& args) {
+        {"sampling_period", [this](const LineTokens& args) {
              auto prd = args.at(0);
              if (prd.find("ms") != std::string::npos)
-                 m_sample_period_ms = std::stoi(args.at(0));
-             else                                                   // seconds
-                 m_sample_period_ms = std::stoi(args.at(0)) * 1000; // convert seconds to ms
+                 m_sampling_period_ms = std::stoi(args.at(0));
+             else                                                     // seconds
+                 m_sampling_period_ms = std::stoi(args.at(0)) * 1000; // convert seconds to ms
          }},
         {"device", [this](const LineTokens& args) {m_physical_devices.push_back(new PhysicalDevice); if (args.size() > 0) m_physical_devices.back()->SetName(args.at(0)); }},
         {"id", [this](const LineTokens& args) { m_physical_devices.back()->SetID(std::stoi(args.at(0))); }},
@@ -211,8 +211,7 @@ void Acquisition::ReadData()
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(
-            m_sample_period_ms > 0 ? m_sample_period_ms : 100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 }
 
@@ -283,7 +282,7 @@ void Acquisition::ConnectToDevices()
         bool connected = true;
         for (auto& dev : m_physical_devices) {
             if (dev->TryConnect())
-                dev->SetSamplePeriod(m_sample_period_ms);
+                dev->SetSamplingPeriod(m_sampling_period_ms);
             else
                 connected = false;
         }
@@ -307,8 +306,13 @@ void Acquisition::DisconnectFromDevices()
         // Do not clear m_physical_devices, just manually disconnect. This allows saving data after disconnecting.
         for (auto& dev : m_physical_devices)
             dev->Disconnect();
-        std::cout << "Disconnected from all devices\n\n";
         m_devices_connected = false;
         m_thread_read_data.join();
+        std::cout << "Disconnected from all devices\n\n";
     }
+}
+
+uint32_t Acquisition::GetSamplingPeriod() const
+{
+    return m_sampling_period_ms;
 }

@@ -49,6 +49,7 @@ Application::Application()
     });
 
     m_acquisition->signal_devices_loaded.connect([this](std::vector<BaseDevice const*> const& devices) {
+        m_mainWindow->Chart()->SetSamplingPeriod(m_acquisition->GetSamplingPeriod());
         m_mainWindow->Chart()->LoadDevices(devices);
     });
 }

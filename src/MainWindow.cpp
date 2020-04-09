@@ -42,9 +42,9 @@ void MainWindow::button_clear_clicked()
 }
 
 MainWindow::MainWindow() :
-    Window(1100, 600, "Sample and Graph", sf::Style::None | sf::Style::Close)
+    Window(1230, 600, "Sample and Graph", sf::Style::None | sf::Style::Close)
 {
-    chart = std::make_shared<::Chart>(100, 10, 990, 580, 100, 100);
+    chart = std::make_shared<::Chart>(100, 10, 1120, 580, 100, 100);
 
     chart->signal_chart_signals_configured.connect([this](std::vector<std::shared_ptr<ChartSignal>> const& signals) {
         if (checkboxes_signal_enabled.size() > 0) {

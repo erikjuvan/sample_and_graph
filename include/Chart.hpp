@@ -16,12 +16,12 @@ public:
         m_text.setFont(m_font);
         m_text.setCharacterSize(12);
         m_text.setColor(sf::Color::Black);
-        m_curve.resize(static_cast<int>(region.width) - 1);
     }
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override
     {
-        if (enabled) {
+        std::scoped_lock<std::mutex> lck(m_data_mtx);
+        if (enabled && m_curve.size() > 0) {
             target.draw(&m_curve[0], m_curve.size(), sf::PrimitiveType::LineStrip, states);
             if (m_curve.back().position.y > 0)
                 target.draw(m_text);
@@ -29,22 +29,22 @@ public:
     }
 
     const auto& Data() const { return m_data; }
-    void        Append(std::vector<float> const& data)
-    {
-        const float y_zero = m_graph_region.top + m_graph_region.height;
 
-        m_curve.erase(m_curve.begin(), m_curve.begin() + data.size());
+    void Append(std::vector<float> const& data)
+    {
+        std::scoped_lock<std::mutex> lck(m_data_mtx);
         for (auto d : data) {
             m_data.push_back(d);
-            m_curve.push_back({sf::Vector2f(0, y_zero - (d / 100.f /*max_val*/) * m_graph_region.height + 1), sf::Color::Black});
         }
 
-        int startx = m_graph_region.left + 1;
-        for (int i = 0; i < m_curve.size(); ++i)
-            m_curve[i].position.x = startx + i;
+        if (!m_draw_index_overwrite && m_draw_index <= (m_data.size() - m_graph_region.width)) {
+            int idx = m_data.size() - m_graph_region.width - 1;
+            if (idx < 0)
+                idx = 0;
+            m_draw_index = idx;
+        }
 
-        auto pos = m_curve.back().position;
-        m_text.setPosition({pos.x + 5, pos.y - m_text_center_pos});
+        UpdataCurve();
     }
 
     void Clear()
@@ -65,10 +65,52 @@ public:
 
     bool enabled{true};
 
+    void ChangeDrawIndex(int draw_index_delta)
+    {
+        std::scoped_lock<std::mutex> lck(m_data_mtx);
+        m_draw_index += draw_index_delta;
+        if (m_draw_index < 0)
+            m_draw_index = 0;
+        if (m_draw_index > m_data.size())
+            m_draw_index = m_data.size() - 1;
+
+        if (m_data.size() - m_draw_index < m_graph_region.width)
+            m_draw_index_overwrite = false;
+        else
+            m_draw_index_overwrite = true;
+
+        UpdataCurve();
+    }
+
+    int GetDrawIndex() const
+    {
+        return m_draw_index;
+    }
+
 private:
-    int m_sample_period_ms{0};
+    void UpdataCurve()
+    {
+        const float y_zero = m_graph_region.top + m_graph_region.height;
+        int         startx = m_graph_region.left;
+
+        m_curve.clear();
+        for (auto it = m_data.begin() + m_draw_index; it != m_data.end() && m_curve.size() <= m_graph_region.width; ++it) {
+            m_curve.push_back({sf::Vector2f(startx++, y_zero - (*it / 100.f /*max_val*/) * m_graph_region.height), sf::Color::Black});
+        }
+
+        // Update text positions
+        if (m_curve.size() > 0) {
+            auto pos = m_curve.back().position;
+            m_text.setPosition({pos.x + 5, pos.y - m_text_center_pos});
+        }
+    }
+
+private:
+    int m_sampling_period_ms{0};
 
     std::vector<float>      m_data;
+    int                     m_draw_index{0};
+    bool                    m_draw_index_overwrite{false};
     std::vector<sf::Vertex> m_curve;
     sf::FloatRect           m_graph_region;
 
@@ -76,6 +118,9 @@ private:
     int         m_text_center_pos;
     sf::Font    m_font;
     sf::Text    m_text;
+
+    // Mutex is neccessary since we could be writting (via acquisition) and reading (via GUI) at the same time
+    mutable std::mutex m_data_mtx;
 };
 
 class Chart : public mygui::Object
@@ -93,7 +138,7 @@ private:
     sf::VertexArray    m_outline;
     sf::VertexArray    m_axes;
     sf::VertexArray    m_grid;
-    int                m_num_grid_lines{0};
+    int                m_num_grid_lines_x{0}, m_num_grid_lines_y{0};
     sf::Text           m_x_axis;
     sf::Text           m_y_axis;
     sf::Text           m_title;
@@ -106,11 +151,17 @@ private:
     std::vector<std::shared_ptr<ChartSignal>> m_chart_signals;
     bool                                      m_draw_all_chart_signals = true;
 
-    std::shared_ptr<float> m_max_val;
+    float m_max_val;
 
     int m_num_of_points;
 
+    int m_sampling_period_ms{0};
+
     bool m_mouseover;
+
+    // Sliding mouse action
+    int  m_mouse_drag_start_pos_x;
+    bool m_holding_left_mouse_button{false};
 
     chart_callback_type m_onKeyPress{nullptr};
 
@@ -130,12 +181,16 @@ public:
     void LoadDevices(std::vector<BaseDevice const*> const& devices);
 
     // n_lines - number of one type of lines (vertical or horizontal), there are same number of other lines
-    void                         CreateGrid(int n_lines);
-    void                         CreateAxisMarkers();
-    const sf::FloatRect&         GraphRegion();
-    std::shared_ptr<float const> MaxVal();
-    void                         ToggleDrawChartSignal(int idx);
-    void                         ToggleDrawAllChartSignals();
+    void                 CreateGrid(int n_lines_x, int n_lines_y);
+    void                 CreateAxisMarkers();
+    void                 CreateAxisX();
+    void                 CreateAxisY();
+    void                 SetAxisX(int startx);
+    const sf::FloatRect& GraphRegion();
+    void                 ToggleDrawChartSignal(int idx);
+    void                 ToggleDrawAllChartSignals();
+
+    void SetSamplingPeriod(uint32_t sampling_period_ms);
 
     void ClearChartSignals();
 

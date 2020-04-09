@@ -91,7 +91,7 @@ public:
     PhysicalDevice();
     ~PhysicalDevice();
 
-    void SetSamplePeriod(uint32_t period_ms) const;
+    void SetSamplingPeriod(uint32_t period_ms) const;
     void Start();
     void Stop();
     bool TryConnect();
