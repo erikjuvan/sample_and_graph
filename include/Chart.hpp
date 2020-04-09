@@ -90,6 +90,9 @@ public:
 private:
     void UpdataCurve()
     {
+        if (m_data.size() <= 0)
+            return;
+
         const float y_zero = m_graph_region.top + m_graph_region.height;
         int         startx = m_graph_region.left;
 
