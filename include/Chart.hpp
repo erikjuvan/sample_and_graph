@@ -38,7 +38,7 @@ public:
         }
 
         if (!m_draw_index_overwrite && m_draw_index <= (m_data.size() - m_graph_region.width)) {
-            int idx = m_data.size() - m_graph_region.width;
+            int idx = m_data.size() - m_graph_region.width - 1;
             if (idx < 0)
                 idx = 0;
             m_draw_index = idx;
@@ -86,13 +86,14 @@ private:
     void UpdataCurve()
     {
         const float y_zero = m_graph_region.top + m_graph_region.height;
-        int         startx = m_graph_region.left + 1;
+        int         startx = m_graph_region.left;
 
         m_curve.clear();
-        for (auto it = m_data.begin() + m_draw_index; it != m_data.end() && m_curve.size() < m_graph_region.width; ++it) {
-            m_curve.push_back({sf::Vector2f(startx++, y_zero - (*it / 100.f /*max_val*/) * m_graph_region.height + 1), sf::Color::Black});
+        for (auto it = m_data.begin() + m_draw_index; it != m_data.end() && m_curve.size() <= m_graph_region.width; ++it) {
+            m_curve.push_back({sf::Vector2f(startx++, y_zero - (*it / 100.f /*max_val*/) * m_graph_region.height), sf::Color::Black});
         }
 
+        // Update text positions
         if (m_curve.size() > 0) {
             auto pos = m_curve.back().position;
             m_text.setPosition({pos.x + 5, pos.y - m_text_center_pos});
@@ -100,7 +101,7 @@ private:
     }
 
 private:
-    int m_sample_period_ms{0};
+    int m_sampling_period_ms{0};
 
     std::vector<float>      m_data;
     int                     m_draw_index{0};
@@ -145,9 +146,11 @@ private:
     std::vector<std::shared_ptr<ChartSignal>> m_chart_signals;
     bool                                      m_draw_all_chart_signals = true;
 
-    std::shared_ptr<float> m_max_val;
+    float m_max_val;
 
     int m_num_of_points;
+
+    int m_sampling_period_ms{0};
 
     bool m_mouseover;
 
@@ -173,12 +176,15 @@ public:
     void LoadDevices(std::vector<BaseDevice const*> const& devices);
 
     // n_lines - number of one type of lines (vertical or horizontal), there are same number of other lines
-    void                         CreateGrid(int n_lines);
-    void                         CreateAxisMarkers();
-    const sf::FloatRect&         GraphRegion();
-    std::shared_ptr<float const> MaxVal();
-    void                         ToggleDrawChartSignal(int idx);
-    void                         ToggleDrawAllChartSignals();
+    void                 CreateGrid(int n_lines);
+    void                 CreateAxisMarkers();
+    void                 SetAxisX(int starty);
+    void                 SetAxisY(int starty);
+    const sf::FloatRect& GraphRegion();
+    void                 ToggleDrawChartSignal(int idx);
+    void                 ToggleDrawAllChartSignals();
+
+    void SetSamplingPeriod(uint32_t sampling_period_ms);
 
     void ClearChartSignals();
 

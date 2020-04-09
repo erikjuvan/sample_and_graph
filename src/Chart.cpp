@@ -4,7 +4,7 @@
 #include <sstream>
 
 Chart::Chart(int x, int y, int w, int h, int num_of_points, float max_val) :
-    m_num_of_points(num_of_points), m_max_val(std::make_shared<float>(max_val)), m_background(sf::Vector2f(w, h)),
+    m_num_of_points(num_of_points), m_max_val(max_val), m_background(sf::Vector2f(w, h)),
     m_chart_region(sf::Vector2f(w - 6 * m_margin, h - 5 * m_margin))
 {
     m_background.setPosition(x, y);
@@ -13,8 +13,10 @@ Chart::Chart(int x, int y, int w, int h, int num_of_points, float max_val) :
 
     m_chart_region.setPosition(x + 4.f * m_margin, y + 2.f * m_margin);
     m_chart_region.setOutlineColor(sf::Color::Black);
-    m_chart_region.setOutlineThickness(1.f);
+    // We need to get global bounds before setting outline thickness, because it adds the thickness to width and height
+    // (outline increases dimensions it doesn't take from it)
     m_chart_rect = m_chart_region.getGlobalBounds();
+    m_chart_region.setOutlineThickness(1.f);
 
     m_font.loadFromFile(mygui::ResourceManager::GetSystemFontName());
     m_title.setFont(m_font);
@@ -25,7 +27,7 @@ Chart::Chart(int x, int y, int w, int h, int num_of_points, float max_val) :
     m_x_axis.setFont(m_font);
     m_x_axis.setFillColor(sf::Color::Black);
     m_x_axis.setCharacterSize(24);
-    m_x_axis.setString("Sample");
+    m_x_axis.setString("Time / min");
     m_x_axis.setPosition(sf::Vector2f(x + w / 2.f - m_x_axis.getLocalBounds().width / 2.f, h - 1.25f * m_margin));
 
     m_y_axis.setFont(m_font);
@@ -63,13 +65,13 @@ void Chart::Handle(const sf::Event& event)
     //  && m_chart_region.getGlobalBounds().contains(sf::Vector2f(event.mouseButton.x, event.mouseButton.y))
     if (event.type == sf::Event::MouseWheelScrolled && m_mouseover) {
         if (event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
-            if (*m_max_val >= 100.f) {
-                *m_max_val -= event.mouseWheelScroll.delta * 50.f;
-            } else if (*m_max_val > 5.f) {
-                *m_max_val -= event.mouseWheelScroll.delta * 5.f;
+            if (m_max_val >= 100.f) {
+                m_max_val -= event.mouseWheelScroll.delta * 50.f;
+            } else if (m_max_val > 5.f) {
+                m_max_val -= event.mouseWheelScroll.delta * 5.f;
             } else {
                 if (event.mouseWheelScroll.delta < 0.f)
-                    *m_max_val -= event.mouseWheelScroll.delta * 5.f;
+                    m_max_val -= event.mouseWheelScroll.delta * 5.f;
             }
 
             CreateAxisMarkers();
@@ -148,6 +150,7 @@ void Chart::LoadDevices(std::vector<BaseDevice const*> const& devices)
             m_chart_signals.back()->Name(n.name());
         }
     }
+    CreateAxisMarkers();
     signal_chart_signals_configured(m_chart_signals);
 }
 
@@ -200,34 +203,20 @@ void Chart::CreateGrid(int n_lines)
         m_grid[2 * i + 1].position = sf::Vector2f(m_chart_rect.left + m_chart_rect.width, m_chart_rect.top + ((j + 1) * (m_chart_rect.height / (n_lines + 1))));
         m_grid[2 * i + 1].color    = color;
     }
-
-    CreateAxisMarkers();
 }
 
 void Chart::CreateAxisMarkers()
 {
-    sf::FloatRect rect = m_chart_region.getGlobalBounds();
+    SetAxisX(0);
+    SetAxisY(0);
+}
+
+void Chart::SetAxisY(int starty)
+{
+    sf::FloatRect rect = m_chart_rect;
     int           n    = m_num_grid_lines + 2; // + 2 is for 0 and max
 
-    m_x_axis_markers.clear();
     m_y_axis_markers.clear();
-
-    // X
-    m_x_axis_markers.reserve(n);
-    for (int i = 0; i < n; ++i) {
-        m_x_axis_markers.push_back(sf::Text());
-        auto& marker = m_x_axis_markers[m_x_axis_markers.size() - 1];
-        marker.setFont(m_font);
-        marker.setFillColor(sf::Color::Black);
-        marker.setCharacterSize(18);
-        int tmp = i * m_num_of_points / (n - 1);
-        marker.setString(std::to_string(tmp));
-        marker.setOrigin(marker.getLocalBounds().left + marker.getLocalBounds().width / 2.f,
-                         marker.getLocalBounds().top + marker.getLocalBounds().height / 2.f);
-        marker.setPosition(rect.left + i * rect.width / (n - 1), rect.top + rect.height + marker.getLocalBounds().height);
-    }
-
-    // Y
     m_y_axis_markers.reserve(n);
     for (int i = 0; i < n; ++i) {
         m_y_axis_markers.push_back(sf::Text());
@@ -235,7 +224,7 @@ void Chart::CreateAxisMarkers()
         marker.setFont(m_font);
         marker.setFillColor(sf::Color::Black);
         marker.setCharacterSize(18);
-        float             tmp = i * *m_max_val / (n - 1);
+        float             tmp = starty + i * m_max_val / (n - 1);
         std::stringstream ss;
         ss << std::fixed << std::setprecision(1) << tmp;
         marker.setString(ss.str());
@@ -245,14 +234,31 @@ void Chart::CreateAxisMarkers()
     }
 }
 
+void Chart::SetAxisX(int startx)
+{
+    sf::FloatRect rect = m_chart_rect;
+    int           n    = m_num_grid_lines + 2; // + 2 is for 0 and max
+
+    m_x_axis_markers.clear();
+    m_x_axis_markers.reserve(n);
+    for (int i = 0; i < n; ++i) {
+        m_x_axis_markers.push_back(sf::Text());
+        auto& marker = m_x_axis_markers.back();
+        marker.setFont(m_font);
+        marker.setFillColor(sf::Color::Black);
+        marker.setCharacterSize(18);
+        // sampling_period * chart_width / num_of_
+        int tmp = startx + i * ((static_cast<float>(m_sampling_period_ms) / (60 * 1000)) * m_chart_rect.width) / (n - 1);
+        marker.setString(std::to_string(tmp));
+        marker.setOrigin(marker.getLocalBounds().left + marker.getLocalBounds().width / 2.f,
+                         marker.getLocalBounds().top + marker.getLocalBounds().height / 2.f);
+        marker.setPosition(rect.left + i * rect.width / (n - 1), rect.top + rect.height + marker.getLocalBounds().height);
+    }
+}
+
 const sf::FloatRect& Chart::GraphRegion()
 {
     return m_chart_rect;
-}
-
-std::shared_ptr<float const> Chart::MaxVal()
-{
-    return m_max_val;
 }
 
 void Chart::OnKeyPress(const chart_callback_type& f)
@@ -277,4 +283,9 @@ void Chart::ClearChartSignals()
 {
     for (auto& cs : m_chart_signals)
         cs->Clear();
+}
+
+void Chart::SetSamplingPeriod(uint32_t sampling_period_ms)
+{
+    m_sampling_period_ms = sampling_period_ms;
 }
