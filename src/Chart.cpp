@@ -37,7 +37,7 @@ Chart::Chart(int x, int y, int w, int h, int num_of_points, float max_val) :
     m_y_axis.setString("Temperature / *C");
     m_y_axis.setPosition(sf::Vector2f(x + m_margin / 4.f, y + h / 2.f + m_y_axis.getLocalBounds().width / 2.f));
 
-    CreateGrid(9);
+    CreateGrid(11, 9);
 }
 
 void Chart::draw(sf::RenderTarget& target, sf::RenderStates states) const
@@ -62,6 +62,13 @@ void Chart::Handle(const sf::Event& event)
     if (!Enabled())
         return;
 
+    auto change_draw_index = [this](int ci) {
+        for (auto& ch : m_chart_signals)
+            ch->ChangeDrawIndex(ci);
+
+        SetAxisX(m_chart_signals.front()->GetDrawIndex());
+    };
+
     //  && m_chart_region.getGlobalBounds().contains(sf::Vector2f(event.mouseButton.x, event.mouseButton.y))
     if (event.type == sf::Event::MouseWheelScrolled && m_mouseover) {
         if (event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
@@ -85,14 +92,12 @@ void Chart::Handle(const sf::Event& event)
     } else if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
         m_holding_left_mouse_button = false;
         if (m_mouseover)
-            for (auto& ch : m_chart_signals)
-                ch->ChangeDrawIndex(m_mouse_drag_start_pos_x - event.mouseButton.x);
+            change_draw_index(m_mouse_drag_start_pos_x - event.mouseButton.x);
     } else if (event.type == sf::Event::MouseMoved) {
         if (m_chart_region.getGlobalBounds().contains(sf::Vector2f(event.mouseMove.x, event.mouseMove.y))) {
             m_mouseover = true;
             if (m_holding_left_mouse_button) {
-                for (auto& ch : m_chart_signals)
-                    ch->ChangeDrawIndex(m_mouse_drag_start_pos_x - event.mouseMove.x);
+                change_draw_index(m_mouse_drag_start_pos_x - event.mouseMove.x);
 
                 m_mouse_drag_start_pos_x = event.mouseMove.x;
             }
@@ -165,6 +170,8 @@ void Chart::Update(std::vector<BaseDevice const*> const& devices)
 
             (*it)->Append(vec);
             it++;
+
+            SetAxisX(m_chart_signals.front()->GetDrawIndex());
         }
     }
 }
@@ -182,39 +189,40 @@ void Chart::ChangeChartSignal(int idx, std::shared_ptr<ChartSignal> const& csign
 }
 
 // n_lines - number of one type of lines (vertical or horizontal), there are same number of other lines
-void Chart::CreateGrid(int n_lines)
+void Chart::CreateGrid(int n_lines_x, int n_lines_y)
 {
-    m_num_grid_lines      = n_lines;
-    m_grid                = sf::VertexArray(sf::PrimitiveType::Lines, n_lines * 4);
+    m_num_grid_lines_x    = n_lines_x;
+    m_num_grid_lines_y    = n_lines_y;
+    m_grid                = sf::VertexArray(sf::PrimitiveType::Lines, n_lines_x * 2 + n_lines_y * 2);
     const sf::Color color = sf::Color(100, 100, 100, 65);
 
     // vertical lines
-    for (int i = 0; i < n_lines; ++i) {
-        m_grid[2 * i].position     = sf::Vector2f(m_chart_rect.left + (i + 1) * (m_chart_rect.width / (n_lines + 1)), m_chart_rect.top);
+    for (int i = 0; i < n_lines_x; ++i) {
+        m_grid[2 * i].position     = sf::Vector2f(m_chart_rect.left + (i + 1) * (m_chart_rect.width / (n_lines_x + 1)), m_chart_rect.top);
         m_grid[2 * i].color        = color;
-        m_grid[2 * i + 1].position = sf::Vector2f(m_chart_rect.left + (i + 1) * (m_chart_rect.width / (n_lines + 1)), m_chart_rect.top + m_chart_rect.height);
+        m_grid[2 * i + 1].position = sf::Vector2f(m_chart_rect.left + (i + 1) * (m_chart_rect.width / (n_lines_x + 1)), m_chart_rect.top + m_chart_rect.height);
         m_grid[2 * i + 1].color    = color;
     }
 
     // horizontal lines
-    for (int i = n_lines, j = 0; i < n_lines * 2; ++i, ++j) {
-        m_grid[2 * i].position     = sf::Vector2f(m_chart_rect.left, m_chart_rect.top + ((j + 1) * (m_chart_rect.height / (n_lines + 1))));
+    for (int i = n_lines_x, j = 0; i < (n_lines_x + n_lines_y); ++i, ++j) {
+        m_grid[2 * i].position     = sf::Vector2f(m_chart_rect.left, m_chart_rect.top + ((j + 1) * (m_chart_rect.height / (n_lines_y + 1))));
         m_grid[2 * i].color        = color;
-        m_grid[2 * i + 1].position = sf::Vector2f(m_chart_rect.left + m_chart_rect.width, m_chart_rect.top + ((j + 1) * (m_chart_rect.height / (n_lines + 1))));
+        m_grid[2 * i + 1].position = sf::Vector2f(m_chart_rect.left + m_chart_rect.width, m_chart_rect.top + ((j + 1) * (m_chart_rect.height / (n_lines_y + 1))));
         m_grid[2 * i + 1].color    = color;
     }
 }
 
 void Chart::CreateAxisMarkers()
 {
-    SetAxisX(0);
-    SetAxisY(0);
+    CreateAxisX();
+    CreateAxisY();
 }
 
-void Chart::SetAxisY(int starty)
+void Chart::CreateAxisY()
 {
     sf::FloatRect rect = m_chart_rect;
-    int           n    = m_num_grid_lines + 2; // + 2 is for 0 and max
+    int           n    = m_num_grid_lines_y + 2; // + 2 is for 0 and max
 
     m_y_axis_markers.clear();
     m_y_axis_markers.reserve(n);
@@ -224,7 +232,7 @@ void Chart::SetAxisY(int starty)
         marker.setFont(m_font);
         marker.setFillColor(sf::Color::Black);
         marker.setCharacterSize(18);
-        float             tmp = starty + i * m_max_val / (n - 1);
+        float             tmp = i * m_max_val / (n - 1);
         std::stringstream ss;
         ss << std::fixed << std::setprecision(1) << tmp;
         marker.setString(ss.str());
@@ -234,10 +242,10 @@ void Chart::SetAxisY(int starty)
     }
 }
 
-void Chart::SetAxisX(int startx)
+void Chart::CreateAxisX()
 {
     sf::FloatRect rect = m_chart_rect;
-    int           n    = m_num_grid_lines + 2; // + 2 is for 0 and max
+    int           n    = m_num_grid_lines_x + 2; // + 2 is for 0 and max
 
     m_x_axis_markers.clear();
     m_x_axis_markers.reserve(n);
@@ -247,12 +255,26 @@ void Chart::SetAxisX(int startx)
         marker.setFont(m_font);
         marker.setFillColor(sf::Color::Black);
         marker.setCharacterSize(18);
-        // sampling_period * chart_width / num_of_
-        int tmp = startx + i * ((static_cast<float>(m_sampling_period_ms) / (60 * 1000)) * m_chart_rect.width) / (n - 1);
-        marker.setString(std::to_string(tmp));
+        // X markers will be in minutes
+        float tmpf = i * ((static_cast<float>(m_sampling_period_ms) / (60 * 1000)) * m_chart_rect.width) / (n - 1);
+        int   tmpi = std::round(tmpf);
+        marker.setString(std::to_string(tmpi));
         marker.setOrigin(marker.getLocalBounds().left + marker.getLocalBounds().width / 2.f,
                          marker.getLocalBounds().top + marker.getLocalBounds().height / 2.f);
         marker.setPosition(rect.left + i * rect.width / (n - 1), rect.top + rect.height + marker.getLocalBounds().height);
+    }
+}
+
+void Chart::SetAxisX(int startx)
+{
+    for (int i = 0; i < m_x_axis_markers.size(); ++i) {
+        auto& marker = m_x_axis_markers[i];
+        // X markers will be in minutes
+        // If e.g. sampling period is 3.6s, then with graph region width = 1000, we have exactly 1 hour long graphing region.
+        float tmpf = startx * (static_cast<float>(m_sampling_period_ms) / (60 * 1000)) +
+                     i * ((static_cast<float>(m_sampling_period_ms) / (60 * 1000)) * m_chart_rect.width) / (m_x_axis_markers.size() - 1);
+        int tmpi = std::round(tmpf);
+        marker.setString(std::to_string(tmpi));
     }
 }
 

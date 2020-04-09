@@ -82,6 +82,11 @@ public:
         UpdataCurve();
     }
 
+    int GetDrawIndex() const
+    {
+        return m_draw_index;
+    }
+
 private:
     void UpdataCurve()
     {
@@ -133,7 +138,7 @@ private:
     sf::VertexArray    m_outline;
     sf::VertexArray    m_axes;
     sf::VertexArray    m_grid;
-    int                m_num_grid_lines{0};
+    int                m_num_grid_lines_x{0}, m_num_grid_lines_y{0};
     sf::Text           m_x_axis;
     sf::Text           m_y_axis;
     sf::Text           m_title;
@@ -176,10 +181,11 @@ public:
     void LoadDevices(std::vector<BaseDevice const*> const& devices);
 
     // n_lines - number of one type of lines (vertical or horizontal), there are same number of other lines
-    void                 CreateGrid(int n_lines);
+    void                 CreateGrid(int n_lines_x, int n_lines_y);
     void                 CreateAxisMarkers();
-    void                 SetAxisX(int starty);
-    void                 SetAxisY(int starty);
+    void                 CreateAxisX();
+    void                 CreateAxisY();
+    void                 SetAxisX(int startx);
     const sf::FloatRect& GraphRegion();
     void                 ToggleDrawChartSignal(int idx);
     void                 ToggleDrawAllChartSignals();
