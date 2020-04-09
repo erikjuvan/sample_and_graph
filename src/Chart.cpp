@@ -77,9 +77,24 @@ void Chart::Handle(const sf::Event& event)
     } else if (event.type == sf::Event::KeyReleased && m_mouseover) {
         if (m_onKeyPress)
             m_onKeyPress(event);
+    } else if (m_mouseover && event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+        m_mouse_drag_start_pos_x    = event.mouseButton.x;
+        m_holding_left_mouse_button = true;
+    } else if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
+        m_holding_left_mouse_button = false;
+        if (m_mouseover)
+            for (auto& ch : m_chart_signals)
+                ch->ChangeDrawIndex(m_mouse_drag_start_pos_x - event.mouseButton.x);
     } else if (event.type == sf::Event::MouseMoved) {
         if (m_chart_region.getGlobalBounds().contains(sf::Vector2f(event.mouseMove.x, event.mouseMove.y))) {
             m_mouseover = true;
+            if (m_holding_left_mouse_button) {
+                for (auto& ch : m_chart_signals)
+                    ch->ChangeDrawIndex(m_mouse_drag_start_pos_x - event.mouseMove.x);
+
+                m_mouse_drag_start_pos_x = event.mouseMove.x;
+            }
+
         } else {
             m_mouseover = false;
         }
