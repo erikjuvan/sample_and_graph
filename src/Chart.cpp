@@ -74,18 +74,19 @@ void Chart::Handle(const sf::Event& event)
 
     //  && m_chart_region.getGlobalBounds().contains(sf::Vector2f(event.mouseButton.x, event.mouseButton.y))
     if (event.type == sf::Event::MouseWheelScrolled && m_mouseover) {
-        if (event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
-            if (m_max_val >= 100.f) {
-                m_max_val -= event.mouseWheelScroll.delta * 50.f;
-            } else if (m_max_val > 5.f) {
-                m_max_val -= event.mouseWheelScroll.delta * 5.f;
-            } else {
-                if (event.mouseWheelScroll.delta < 0.f)
-                    m_max_val -= event.mouseWheelScroll.delta * 5.f;
-            }
+        // Currently not implemented
+        //if (event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
+        //    if (m_max_val >= 100.f) {
+        //        m_max_val -= event.mouseWheelScroll.delta * 50.f;
+        //    } else if (m_max_val > 5.f) {
+        //        m_max_val -= event.mouseWheelScroll.delta * 5.f;
+        //    } else {
+        //        if (event.mouseWheelScroll.delta < 0.f)
+        //            m_max_val -= event.mouseWheelScroll.delta * 5.f;
+        //    }
 
-            CreateAxisMarkers();
-        }
+        //    CreateAxisMarkers();
+        //}
     } else if (event.type == sf::Event::KeyReleased && m_mouseover) {
         if (m_onKeyPress)
             m_onKeyPress(event);
