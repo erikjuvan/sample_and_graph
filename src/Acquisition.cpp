@@ -11,9 +11,6 @@ Acquisition::~Acquisition()
 {
     DisconnectFromDevices();
     Reset();
-
-    if (m_thread_read_data.joinable())
-        m_thread_read_data.join();
 }
 
 Serializer::ser_data_t Acquisition::Serialize() const
@@ -199,7 +196,7 @@ void Acquisition::Reset()
 
 void Acquisition::ReadData()
 {
-    while (m_devices_connected) {
+    if (m_devices_connected) {
         if (m_devices_running) {
             int cnt = 0;
             for (auto& dev : m_physical_devices)
@@ -210,8 +207,6 @@ void Acquisition::ReadData()
                 signal_new_data(devices);
             }
         }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 }
 
@@ -295,7 +290,6 @@ void Acquisition::ConnectToDevices()
         StopDevices();
         std::vector<BaseDevice const*> devices(m_physical_devices.begin(), m_physical_devices.end());
         signal_devices_loaded(devices);
-        m_thread_read_data = std::thread([this] { ReadData(); });
     }
 }
 
@@ -307,7 +301,6 @@ void Acquisition::DisconnectFromDevices()
         for (auto& dev : m_physical_devices)
             dev->Disconnect();
         m_devices_connected = false;
-        m_thread_read_data.join();
         std::cout << "Disconnected from all devices\n\n";
     }
 }

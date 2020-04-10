@@ -2,7 +2,6 @@
 
 #include "Device.hpp"
 #include "lsignal.hpp"
-#include <thread>
 
 class Acquisition : public Serializer
 {
@@ -28,13 +27,13 @@ public:
     void     Clear();
     void     Reset();
     uint32_t GetSamplingPeriod() const;
+    void     ReadData();
 
 private:
     using AllTokens  = std::vector<std::vector<std::string>>;
     using LineTokens = std::vector<std::string>;
 
     // Methods
-    void      ReadData();
     AllTokens ParseConfigFile(const std::string& file_name);
     void      ConfigureFromTokens(AllTokens all_tokens);
 
@@ -44,8 +43,6 @@ private:
 
     bool m_devices_connected{false};
     bool m_devices_running{false};
-
-    std::thread m_thread_read_data;
 
     uint32_t m_sampling_period_ms{0};
 };
