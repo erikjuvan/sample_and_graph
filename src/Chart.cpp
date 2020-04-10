@@ -63,6 +63,9 @@ void Chart::Handle(const sf::Event& event)
         return;
 
     auto change_draw_index = [this](int ci) {
+        if (m_chart_signals.size() <= 0)
+            return;
+
         for (auto& ch : m_chart_signals)
             ch->ChangeDrawIndex(ci);
 
