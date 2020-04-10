@@ -1,4 +1,6 @@
 #include "MainWindow.hpp"
+#include <chrono>
+#include <iomanip>
 
 void MainWindow::button_connect_clicked()
 {
@@ -24,10 +26,14 @@ void MainWindow::button_run_clicked()
         button_run->SetText("Running");
         button_run->SetColor(sf::Color::Green);
         button_save->Enabled(false);
+        m_run_start.first  = true;
+        m_run_start.second = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     } else {
         button_run->SetText("Run");
         button_run->ResetColor();
         button_save->Enabled(true);
+        m_run_start.first = false;
+        m_total_run_time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count() - m_run_start.second;
     }
 }
 
@@ -41,9 +47,31 @@ void MainWindow::button_clear_clicked()
     signal_button_clear_Clicked();
 }
 
+void MainWindow::UpdateTitleBar()
+{
+    auto alive_sec                 = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count() - m_alive_start;
+    auto [running, run_start_time] = m_run_start;
+    auto run_sec                   = run_start_time;
+    if (running) {
+        auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        run_sec  = m_total_run_time + (now - run_start_time);
+    } else
+        run_sec = m_total_run_time;
+    //auto size = ;
+    //auto capacity = ;
+    // Update title bar
+    std::stringstream str;
+    str << "Sorting Control    alive: " << std::to_string(alive_sec / 60) << ":" << std::setw(2) << std::setfill('0') << std::to_string(alive_sec % 60)
+        << "  running: " << std::to_string(run_sec / 60) << ":" << std::setw(2) << std::setfill('0') << std::to_string(run_sec % 60); // << "   Buffer size: " << size << " MB" // Not implemented ATM
+                                                                                                                                      // << " / " << capacity << " MB";         // Not implemented ATM
+    SetTitle(str.str());
+}
+
 MainWindow::MainWindow() :
     Window(1230, 600, "Sample and Graph", sf::Style::None | sf::Style::Close)
 {
+    m_alive_start = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+
     chart = std::make_shared<::Chart>(100, 10, 1120, 580, 100, 100);
 
     chart->signal_chart_signals_configured.connect([this](std::vector<std::shared_ptr<ChartSignal>> const& signals) {
@@ -88,6 +116,9 @@ MainWindow::MainWindow() :
     button_clear = std::make_shared<mygui::Button>(10, 270, "Clear Data");
     button_clear->OnClick([this] { button_clear_clicked(); });
 
+    action_update_titlebar = std::make_shared<mygui::Action>();
+    action_update_titlebar->DoAction([this] { UpdateTitleBar(); });
+
     // Add widgets
 
     Add(chart);
@@ -100,6 +131,8 @@ MainWindow::MainWindow() :
     Add(button_load);
 
     Add(button_clear);
+
+    Add(action_update_titlebar);
 }
 
 MainWindow::~MainWindow()

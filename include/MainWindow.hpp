@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mygui/Action.hpp>
 #include <mygui/Button.hpp>
 #include <mygui/Checkbox.hpp>
 #include <mygui/Textbox.hpp>
@@ -15,6 +16,10 @@ class MainWindow : public Window
 private:
     // Members
     const uint32_t m_Colors[10]{0xFF0000FF, 0x00FF00FF, 0x0000FFFF, 0xFFFF00FF, 0x00FFFFFF, 0xFF00FFFF, 0xFF8000FF, 0xC0C0C0FF, 0x800000FF, 0x808000FF};
+
+    std::pair<bool, long long> m_run_start{false, 0};
+    long long                  m_total_run_time{0};
+    long long                  m_alive_start{0};
 
     // Widgets
     //////////
@@ -36,10 +41,17 @@ private:
     // Checkboxes to enable/disable drawing of signals
     std::vector<std::shared_ptr<mygui::Checkbox>> checkboxes_signal_enabled;
 
+    // Actions
+    std::shared_ptr<mygui::Action> action_update_titlebar;
+
+    // Widget callback functions
     void button_connect_clicked();
     void button_run_clicked();
     void button_load_clicked();
     void button_clear_clicked();
+
+    // Private functions
+    void UpdateTitleBar();
 
 public:
     // Methods
