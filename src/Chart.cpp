@@ -132,20 +132,23 @@ void Chart::ConvertData(std::vector<float>& data)
     // NTC equation
     const float vcc   = 3.0;
     const float r1    = 5600.f;
-    const float beta  = 4920; // datasheet
+    const float beta  = 4920.f; // datasheet
     const float rntc0 = 33000.f;
     const float t0    = 298.15; // 25 *C
     const float rinf  = rntc0 * std::exp(-beta / t0);
     for (auto& y : data) {
-        auto vntc = vcc * y / 4096.f;
+        //auto vntc = vcc * y / 4096.f;
         // Vntc = Vcc * Rntc / (R1 + Rntc);
         // Vntc * R1 + Vntc * Rntc = Vcc * Rntc
         // Rntc * (Vcc - Vntc) = Vntc * R1
         // Rntc = Vntc / (Vcc - Vntc) * R1;
-        float rntc = vntc / (vcc - vntc) * r1;
+        //float rntc = vntc / (vcc - vntc) * r1;
 
         // Temperature: Tntc = beta / (ln(Rntc/Rinf))
-        y = beta / std::log(rntc / rinf) - 273.15;
+        //y = beta / std::log(rntc / rinf) - 273.15;
+
+        // Using Wolfram alpha I simplified the equation. Notice Vcc is not used, since to calculate rntc we only need the adc ratio value, no the absolute.
+        y = beta / (std::log(-y / (y - 4096.f)) + 14.728) - 273.15;
     }
 }
 
