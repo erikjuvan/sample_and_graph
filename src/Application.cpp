@@ -6,6 +6,7 @@ using namespace std::chrono_literals;
 void Application::MainLoop()
 {
     while (m_mainWindow->IsOpen()) {
+        m_acquisition->ReadData();
         m_mainWindow->Update();
         // 60 FPS is enough
         std::this_thread::sleep_for(15ms);

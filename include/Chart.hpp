@@ -20,7 +20,6 @@ public:
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override
     {
-        std::scoped_lock<std::mutex> lck(m_data_mtx);
         if (enabled && m_curve.size() > 0) {
             target.draw(&m_curve[0], m_curve.size(), sf::PrimitiveType::LineStrip, states);
             if (m_curve.back().position.y > 0)
@@ -32,7 +31,6 @@ public:
 
     void Append(std::vector<float> const& data)
     {
-        std::scoped_lock<std::mutex> lck(m_data_mtx);
         for (auto d : data) {
             m_data.push_back(d);
         }
@@ -68,7 +66,6 @@ public:
 
     void ChangeDrawIndex(int draw_index_delta)
     {
-        std::scoped_lock<std::mutex> lck(m_data_mtx);
         m_draw_index += draw_index_delta;
         if (m_draw_index < 0)
             m_draw_index = 0;
@@ -122,9 +119,6 @@ private:
     int         m_text_center_pos;
     sf::Font    m_font;
     sf::Text    m_text;
-
-    // Mutex is neccessary since we could be writting (via acquisition) and reading (via GUI) at the same time
-    mutable std::mutex m_data_mtx;
 };
 
 class Chart : public mygui::Object
