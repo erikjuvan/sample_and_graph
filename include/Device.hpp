@@ -36,7 +36,8 @@ public:
     void                         append(std::vector<uint32_t> const& data) { m_buffer.insert(m_buffer.end(), data.begin(), data.end()); }
     void                         name(std::string const& name) { m_name = name; }
     std::string                  name() const { return m_name; }
-    void                         clear()
+    void                         clear() { m_buffer.clear(); }
+    void                         reset()
     {
         m_name.clear();
         m_buffer.clear();
@@ -63,6 +64,11 @@ public:
     virtual Node const&              GetNode(int idx) const { return m_nodes.at(idx); }
     virtual void                     Clear()
     {
+        for (auto& n : m_nodes)
+            n.clear();
+    }
+    virtual void Reset()
+    {
         m_id = -1;
         m_name.clear();
         m_nodes.clear();
@@ -85,7 +91,7 @@ public:
     PhysicalDevice();
     ~PhysicalDevice();
 
-    void SetSamplePeriod(uint32_t period_ms) const;
+    void SetSamplingPeriod(uint32_t period_ms) const;
     void Start();
     void Stop();
     bool TryConnect();

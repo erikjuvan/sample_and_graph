@@ -211,7 +211,7 @@ PhysicalDevice::~PhysicalDevice()
     Disconnect();
 }
 
-void PhysicalDevice::SetSamplePeriod(uint32_t period_ms) const
+void PhysicalDevice::SetSamplingPeriod(uint32_t period_ms) const
 {
     auto cmd = "PRDS," + std::to_string(period_ms) + "\n";
     m_serial_socket->Write(cmd);

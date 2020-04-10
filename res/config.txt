@@ -1,7 +1,7 @@
 # This is an example configuration file
 
 # Set sampling period
-sample_period 1s # valid extensions are 's'(default) or 'ms'.
+sampling_period 3600ms # valid extensions are 's'(default) or 'ms'.
 
 # Add device
 device optional_name # 'device' command adds new device 

@@ -6,6 +6,7 @@ using namespace std::chrono_literals;
 void Application::MainLoop()
 {
     while (m_mainWindow->IsOpen()) {
+        m_acquisition->ReadData();
         m_mainWindow->Update();
         // 60 FPS is enough
         std::this_thread::sleep_for(15ms);
@@ -40,14 +41,17 @@ Application::Application()
     });
 
     m_mainWindow->signal_button_clear_Clicked.connect([this] {
+        m_mainWindow->Chart()->ClearChartSignals();
         m_acquisition->Clear();
+        m_mainWindow->Chart()->SetAxisX(0);
     });
 
-    m_acquisition->signal_new_data.connect([this]() {
-        m_mainWindow->Chart()->Update();
+    m_acquisition->signal_new_data.connect([this](std::vector<BaseDevice const*> const& devices) {
+        m_mainWindow->Chart()->Update(devices);
     });
 
     m_acquisition->signal_devices_loaded.connect([this](std::vector<BaseDevice const*> const& devices) {
+        m_mainWindow->Chart()->SetSamplingPeriod(m_acquisition->GetSamplingPeriod());
         m_mainWindow->Chart()->LoadDevices(devices);
     });
 }
