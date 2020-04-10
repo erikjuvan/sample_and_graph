@@ -103,6 +103,11 @@ void Acquisition::ConfigureFromTokens(Acquisition::AllTokens all_tokens)
 
 void Acquisition::Save() const
 {
+    if (m_physical_devices.size() <= 0) {
+        std::cout << "Nothing so save!\n";
+        return;
+    }
+
     auto get_available_filename = [](std::string base_name) -> auto
     {
         std::string suffix;
