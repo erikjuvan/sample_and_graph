@@ -53,6 +53,7 @@ public:
         auto size = m_curve.size();
         m_curve.clear();
         m_curve.resize(size);
+        m_draw_index = {0};
     }
 
     void Name(std::string name)

@@ -161,6 +161,7 @@ void Chart::LoadDevices(std::vector<BaseDevice const*> const& devices)
         }
     }
     CreateAxisMarkers();
+    SetAxisX(m_chart_signals.front()->GetDrawIndex());
     signal_chart_signals_configured(m_chart_signals);
 }
 
@@ -175,10 +176,10 @@ void Chart::Update(std::vector<BaseDevice const*> const& devices)
 
             (*it)->Append(vec);
             it++;
-
-            SetAxisX(m_chart_signals.front()->GetDrawIndex());
         }
     }
+
+    SetAxisX(m_chart_signals.front()->GetDrawIndex());
 }
 
 void Chart::AddChartSignal(std::shared_ptr<ChartSignal> const& csignal)

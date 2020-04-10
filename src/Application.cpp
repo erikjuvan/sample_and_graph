@@ -42,6 +42,7 @@ Application::Application()
     m_mainWindow->signal_button_clear_Clicked.connect([this] {
         m_mainWindow->Chart()->ClearChartSignals();
         m_acquisition->Clear();
+        m_mainWindow->Chart()->SetAxisX(0);
     });
 
     m_acquisition->signal_new_data.connect([this](std::vector<BaseDevice const*> const& devices) {
