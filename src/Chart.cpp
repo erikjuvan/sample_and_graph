@@ -270,7 +270,7 @@ void Chart::CreateAxisX()
         marker.setCharacterSize(18);
         // X markers will be in minutes
         float tmpf = i * ((static_cast<float>(m_sampling_period_ms) / (60 * 1000)) * m_chart_rect.width) / (n - 1);
-        int   tmpi = std::round(tmpf);
+        int   tmpi = std::floor(tmpf);
         marker.setString(std::to_string(tmpi));
         marker.setOrigin(marker.getLocalBounds().left + marker.getLocalBounds().width / 2.f,
                          marker.getLocalBounds().top + marker.getLocalBounds().height / 2.f);
@@ -286,7 +286,7 @@ void Chart::SetAxisX(int startx)
         // If e.g. sampling period is 3.6s, then with graph region width = 1000, we have exactly 1 hour long graphing region.
         float tmpf = startx * (static_cast<float>(m_sampling_period_ms) / (60 * 1000)) +
                      i * ((static_cast<float>(m_sampling_period_ms) / (60 * 1000)) * m_chart_rect.width) / (m_x_axis_markers.size() - 1);
-        int tmpi = std::round(tmpf);
+        int tmpi = std::floor(tmpf);
         marker.setString(std::to_string(tmpi));
     }
 }
