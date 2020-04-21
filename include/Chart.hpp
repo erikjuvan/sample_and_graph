@@ -185,8 +185,9 @@ public:
     void                 CreateAxisY();
     void                 SetAxisX(int startx);
     const sf::FloatRect& GraphRegion();
-    void                 ToggleDrawChartSignal(int idx);
-    void                 ToggleDrawAllChartSignals();
+    void                 SetDrawChartSignal(int idx, bool on);
+    bool                 ToggleDrawChartSignal(int idx);
+    bool                 ToggleDrawAllChartSignals();
 
     void SetSamplingPeriod(uint32_t sampling_period_ms);
 

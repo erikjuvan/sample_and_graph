@@ -73,11 +73,11 @@ void MainWindow::UpdateTitleBar()
 }
 
 MainWindow::MainWindow() :
-    Window(1230, 600, "Sample and Graph", sf::Style::None | sf::Style::Close)
+    Window(1230, 660, "Sample and Graph", sf::Style::None | sf::Style::Close)
 {
     m_alive_start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
-    chart = std::make_shared<::Chart>(100, 10, 1120, 580, 100, 100);
+    chart = std::make_shared<::Chart>(100, 10, 1120, 640, 100, 100);
 
     chart->signal_chart_signals_configured.connect([this](std::vector<std::shared_ptr<ChartSignal>> const& signals) {
         if (checkboxes_signal_enabled.size() > 0) {
@@ -87,10 +87,11 @@ MainWindow::MainWindow() :
             checkboxes_signal_enabled.clear();
         }
 
-        const int spacing  = 23;
-        const int y_offset = 15 + button_clear->GetGlobalBounds().top + button_clear->GetGlobalBounds().height;
-        int       modulo   = (m_window->getSize().y - button_clear->GetGlobalBounds().top -
-                      button_clear->GetGlobalBounds().height - spacing) /
+        const int   spacing       = 23;
+        auto const& lowest_button = button_sel_desel_all_chkbxs;
+        const int   y_offset      = 15 + lowest_button->GetGlobalBounds().top + lowest_button->GetGlobalBounds().height;
+        int         modulo        = (m_window->getSize().y - lowest_button->GetGlobalBounds().top -
+                      lowest_button->GetGlobalBounds().height - spacing) /
                      spacing;
         for (int i = 0; i < signals.size(); ++i) {
             int column = i / modulo;
@@ -100,7 +101,9 @@ MainWindow::MainWindow() :
             checkboxes_signal_enabled.push_back(std::make_shared<mygui::Checkbox>(x, y, signals[i]->Name(), 13, 13, 13));
             checkboxes_signal_enabled.back()->Checked(true);
             Add(checkboxes_signal_enabled.back());
-            checkboxes_signal_enabled.back()->OnClick([this, i] { chart->ToggleDrawChartSignal(i); });
+            checkboxes_signal_enabled.back()->OnClick([this, i] {
+                chart->SetDrawChartSignal(i, checkboxes_signal_enabled.at(i)->Checked());
+            });
         }
     });
 
@@ -121,6 +124,13 @@ MainWindow::MainWindow() :
     button_clear = std::make_shared<mygui::Button>(10, 270, "Clear Data");
     button_clear->OnClick([this] { button_clear_clicked(); });
 
+    button_sel_desel_all_chkbxs = std::make_shared<mygui::Button>(10, 320, "(De)select");
+    button_sel_desel_all_chkbxs->OnClick([this] {
+        auto enabled = chart->ToggleDrawAllChartSignals();
+        for (auto& cb : checkboxes_signal_enabled)
+            cb->Checked(enabled);
+    });
+
     action_update_titlebar = std::make_shared<mygui::Action>();
     action_update_titlebar->DoAction([this] { UpdateTitleBar(); });
 
@@ -136,6 +146,8 @@ MainWindow::MainWindow() :
     Add(button_load);
 
     Add(button_clear);
+
+    Add(button_sel_desel_all_chkbxs);
 
     Add(action_update_titlebar);
 }

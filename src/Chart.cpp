@@ -301,17 +301,27 @@ void Chart::OnKeyPress(const chart_callback_type& f)
     m_onKeyPress = f;
 }
 
-void Chart::ToggleDrawChartSignal(int idx)
+void Chart::SetDrawChartSignal(int idx, bool on)
+{
+    if (idx >= 0 && idx < m_chart_signals.size())
+        m_chart_signals[idx]->enabled = on;
+}
+
+bool Chart::ToggleDrawChartSignal(int idx)
 {
     if (idx >= 0 && idx < m_chart_signals.size())
         m_chart_signals[idx]->enabled = !m_chart_signals[idx]->enabled;
+
+    return m_chart_signals[idx]->enabled;
 }
 
-void Chart::ToggleDrawAllChartSignals()
+bool Chart::ToggleDrawAllChartSignals()
 {
     m_draw_all_chart_signals = !m_draw_all_chart_signals;
     for (auto& sig : m_chart_signals)
         sig->enabled = m_draw_all_chart_signals;
+
+    return m_draw_all_chart_signals;
 }
 
 void Chart::ClearChartSignals()
