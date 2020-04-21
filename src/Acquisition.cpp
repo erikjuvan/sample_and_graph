@@ -1,6 +1,7 @@
 #include "Acquisition.hpp"
 #include "Helpers.hpp"
 #include <algorithm>
+#include <ctime>
 #include <fstream>
 #include <future>
 #include <iostream>
@@ -16,6 +17,9 @@ Acquisition::~Acquisition()
 Serializer::ser_data_t Acquisition::Serialize() const
 {
     Serializer::ser_data_t data;
+    auto                   dt        = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    auto                   date_time = std::string(std::ctime(&dt));
+    Serializer::append(data, date_time, "");
     Serializer::append(data, "sampling_period");
     Serializer::append(data, m_sampling_period_ms, "ms\n");
     for (auto const& dev : m_physical_devices)
@@ -25,6 +29,7 @@ Serializer::ser_data_t Acquisition::Serialize() const
 
 void Acquisition::Deserialize(ser_data_t& data)
 {
+    data            = ser_data_t(std::find(data.begin(), data.end(), '\n') + 1, data.end());
     auto newline_it = std::find(data.begin(), data.end(), '\n');
 
     std::string              str(data.begin(), newline_it);
