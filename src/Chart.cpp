@@ -160,6 +160,7 @@ void Chart::LoadDevices(std::vector<BaseDevice const*> const& devices)
         for (auto& n : d->GetNodes()) {
             m_chart_signals.push_back(std::make_shared<ChartSignal>(m_chart_rect));
             m_chart_signals.back()->Name(n.name());
+            m_chart_signals.back()->MaxVal(m_max_val);
             if (n.buffer().size() > 0) {
                 std::vector<float> buf(n.buffer().begin(), n.buffer().end());
                 ConvertData(buf);

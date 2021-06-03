@@ -62,6 +62,12 @@ public:
     }
     std::string Name() { return m_name; }
 
+    void MaxVal(float max_val)
+    {
+        m_max_val = max_val;
+    }
+    float MaxVal() { return m_max_val; }
+
     bool enabled{true};
 
     void ChangeDrawIndex(int draw_index_delta)
@@ -96,7 +102,7 @@ private:
 
         m_curve.clear();
         for (auto it = m_data.begin() + m_draw_index; it != m_data.end() && m_curve.size() <= m_graph_region.width; ++it) {
-            m_curve.push_back({sf::Vector2f(startx++, y_zero - (*it / 100.f /*max_val*/) * m_graph_region.height), sf::Color::Black});
+            m_curve.push_back({sf::Vector2f(startx++, y_zero - (*it / m_max_val) * m_graph_region.height), sf::Color::Black});
         }
 
         // Update text positions
@@ -119,6 +125,7 @@ private:
     int         m_text_center_pos;
     sf::Font    m_font;
     sf::Text    m_text;
+    float       m_max_val;
 };
 
 class Chart : public mygui::Object
