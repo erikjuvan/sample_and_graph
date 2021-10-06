@@ -77,7 +77,7 @@ MainWindow::MainWindow() :
 {
     m_alive_start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
-    chart = std::make_shared<::Chart>(100, 10, 1120, 640, 100, 100);
+    chart = std::make_shared<::Chart>(100, 10, 1120, 640, 100, 2500);
 
     chart->signal_chart_signals_configured.connect([this](std::vector<std::shared_ptr<ChartSignal>> const& signals) {
         if (checkboxes_signal_enabled.size() > 0) {

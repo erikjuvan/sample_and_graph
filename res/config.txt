@@ -1,16 +1,6 @@
-# This is an example configuration file
+sampling_period 100ms # valid extensions are 's'(default) or 'ms'.
 
-# Set sampling period
-sampling_period 3600ms # valid extensions are 's'(default) or 'ms'.
-
-# Add device
-device optional_name # 'device' command adds new device 
-id 1 # 'id' sets device which is used for communication.
-nodes PU1_1 PU1_2 PU1_3 PU1_4 PU1_5 PU1_6 PU1_7 PU1_8 # 'nodes' adds new nodes to device
-
-# Add another device
-device optional_name2
-id 2
-nodes PU2_1 PU2_2 PU2_3 PU2_4 PU3_1 PU3_2 PU3_3 PU4_1
-
-# ... configure other devices if needed
+# Configure new device
+device F746
+id 1
+nodes tok

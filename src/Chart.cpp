@@ -11,7 +11,7 @@ Chart::Chart(int x, int y, int w, int h, int num_of_points, float max_val) :
     m_background.setOutlineColor(sf::Color::Black);
     m_background.setOutlineThickness(1.f);
 
-    m_chart_region.setPosition(x + 4.f * m_margin, y + 2.f * m_margin);
+    m_chart_region.setPosition(x + 5.f * m_margin, y + 2.f * m_margin);
     m_chart_region.setOutlineColor(sf::Color::Black);
     // We need to get global bounds before setting outline thickness, because it adds the thickness to width and height
     // (outline increases dimensions it doesn't take from it)
@@ -34,7 +34,7 @@ Chart::Chart(int x, int y, int w, int h, int num_of_points, float max_val) :
     m_y_axis.setFillColor(sf::Color::Black);
     m_y_axis.setCharacterSize(24);
     m_y_axis.setRotation(-90.f);
-    m_y_axis.setString("Temperature / *C");
+    m_y_axis.setString("Current / mA");
     m_y_axis.setPosition(sf::Vector2f(x + m_margin / 4.f, y + h / 2.f + m_y_axis.getLocalBounds().width / 2.f));
 
     CreateGrid(11, 9);
@@ -125,30 +125,13 @@ bool Chart::Enabled() const
     return m_enabled;
 }
 
-// Convert data from raw ADC voltage to NTC temperature
+// Convert data from raw ADC voltage to mA (mili-amps)
 void Chart::ConvertData(std::vector<float>& data)
 {
-    // Calculate degrees from raw data
-    // NTC equation
-    const float vcc   = 3.0;
-    const float r1    = 5600.f;
-    const float beta  = 4920.f; // datasheet
-    const float rntc0 = 33000.f;
-    const float t0    = 298.15; // 25 *C
-    const float rinf  = rntc0 * std::exp(-beta / t0);
+    const float max_sense_mA = (3.3 / 0.53125) * 1000; // Vref / Rsense
+    const float mA_per_bit   = max_sense_mA / 4096;
     for (auto& y : data) {
-        //auto vntc = vcc * y / 4096.f;
-        // Vntc = Vcc * Rntc / (R1 + Rntc);
-        // Vntc * R1 + Vntc * Rntc = Vcc * Rntc
-        // Rntc * (Vcc - Vntc) = Vntc * R1
-        // Rntc = Vntc / (Vcc - Vntc) * R1;
-        //float rntc = vntc / (vcc - vntc) * r1;
-
-        // Temperature: Tntc = beta / (ln(Rntc/Rinf))
-        //y = beta / std::log(rntc / rinf) - 273.15;
-
-        // Using Wolfram alpha I simplified the equation. Notice Vcc is not used, since to calculate rntc we only need the adc ratio value, no the absolute.
-        y = beta / (std::log(-y / (y - 4096.f)) + 14.728) - 273.15;
+        y = mA_per_bit * y; // y is now in mA
     }
 }
 
